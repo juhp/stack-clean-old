@@ -28,8 +28,8 @@ executable stack-clean-old
                      , directory
                      , extra
                      , filepath
-                     , simple-cmd
-                     , simple-cmd-args
+                     , simple-cmd >= 0.1.4
+                     , simple-cmd-args >= 0.1.2
   default-language:    Haskell2010
   ghc-options:         -Wall
   if impl(ghc >= 8.0)

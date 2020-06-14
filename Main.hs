@@ -1,6 +1,11 @@
+{-# LANGUAGE CPP #-}
+
 import Control.Monad.Extra
 import Data.List.Extra
-import SimpleCmd hiding (ifM)
+import SimpleCmd
+#if MIN_VERSION_simple_cmd(0,2,1)
+  hiding (ifM)
+#endif
 import SimpleCmdArgs
 import System.Directory
 import System.FilePath
