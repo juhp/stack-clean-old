@@ -27,14 +27,12 @@ cleanStackWork :: Maybe FilePath -> IO ()
 cleanStackWork mdir = do
   whenJust mdir $ \ dir -> setCurrentDirectory dir
   switchToSystemDirUnder ".stack-work/install"
-  -- number of builds to keep per ghc version
   cleanAwayOldBuilds 4
 
 cleanSnapshots :: IO ()
 cleanSnapshots = do
   home <- getHomeDirectory
   switchToSystemDirUnder $ home </> ".stack/snapshots"
-  -- number of snapshots to keep per ghc version
   cleanAwayOldBuilds 50
 
 switchToSystemDirUnder :: FilePath -> IO ()
@@ -49,7 +47,8 @@ switchToSystemDirUnder dir = do
         _ -> error' "More than one OS systems found " ++ dir ++ " (unsupported)"
   setCurrentDirectory system
 
-cleanAwayOldBuilds :: Int -> IO ()
+cleanAwayOldBuilds :: Int -- ^ number of snapshots to keep per ghc version
+                   -> IO ()
 cleanAwayOldBuilds keep = do
   -- sort and then group by ghc version
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
