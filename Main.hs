@@ -65,6 +65,8 @@ cleanAwayOldBuilds keep = do
     removeOlder dirs = do
       oldfiles <- drop keep . reverse <$> sortedByAge
       mapM_ (removeDirectoryRecursive . takeDirectory) oldfiles
+      unless (null oldfiles) $
+        putStrLn $ show (length oldfiles) ++ "dirs removed"
       where
         sortedByAge = do
           fileTimes <- mapM newestTimeStamp dirs
