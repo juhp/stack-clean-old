@@ -15,25 +15,31 @@ import Paths_stack_clean_old (version)
 main :: IO ()
 main = do
   simpleCmdArgs (Just version) "Stack clean up tool"
-    "Cleans away old stack snapshots and stack-work builds to recover diskspace." $
-    subcommands
-    [ Subcommand "snapshots" "purge older ~/.stack/snapshots" $
-      pure cleanSnapshots
-    , Subcommand "project" "purge older builds in .stack-work/install" $
-      cleanStackWork <$> optional (strArg "PROJECTDIR")
-    ]
+    "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace." $
+    -- subcommands
+    -- [ Subcommand "project" "purge older builds in .stack-work/install" $
+      cleanStackWork <$> keepOption "number of project builds per ghc version" <*> optional (strArg "PROJECTDIR")
+    -- , Subcommand "snapshots" "purge older ~/.stack/snapshots" $
+    --   cleanSnapshots <$> keepOption "number of dozens of snapshot builds per ghc version"
+    -- ]
+  where
+    keepOption hlp = positive <$> (optionalWith auto 'k' "keep" "INT" hlp 5)
 
-cleanStackWork :: Maybe FilePath -> IO ()
-cleanStackWork mdir = do
+    positive :: Int -> Int
+    positive n = if n > 0 then n else error' "Must be positive integer"
+
+cleanStackWork :: Int -> Maybe FilePath -> IO ()
+cleanStackWork keep mdir = do
   whenJust mdir $ \ dir -> setCurrentDirectory dir
   switchToSystemDirUnder ".stack-work/install"
-  cleanAwayOldBuilds 4
+  cleanAwayOldBuilds $ keep
 
-cleanSnapshots :: IO ()
-cleanSnapshots = do
-  home <- getHomeDirectory
-  switchToSystemDirUnder $ home </> ".stack/snapshots"
-  cleanAwayOldBuilds 50
+-- -- Disabled until we track deps between snapshot dirs!
+-- cleanSnapshots :: Int -> IO ()
+-- cleanSnapshots keep = do
+--   home <- getHomeDirectory
+--   switchToSystemDirUnder $ home </> ".stack/snapshots"
+--   cleanAwayOldBuilds $ keep * 10
 
 switchToSystemDirUnder :: FilePath -> IO ()
 switchToSystemDirUnder dir = do

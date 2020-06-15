@@ -1,1 +1,1 @@
-- option to specify a ghc build version to remove
+- track snapshot dependencies through package .conf files
