@@ -5,9 +5,13 @@ to recover diskspace.
 
 ## Usage
 ```
-stack-clean-old [project|snapshots] [size|list|remove-version] [GHCVER]
+stack-clean-old [project|snapshots|ghc] [size|list|remove-version] [GHCVER]
 ```
-These commands act either on the current local project (`.stack-work/`) or user's stack snapshot builds (`~/.stack/snapshots`).
+These commands act respectively on:
+
+- the current local project (`.stack-work/`)
+- the user's stack snapshot builds (`~/.stack/snapshots/`)
+- installed stack ghc compilers  (`~/.stack/programs/`).
 
 `size`:
     prints the total size of stack builds for the project or snapshots.
