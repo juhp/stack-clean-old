@@ -25,7 +25,7 @@ main = do
       [ Subcommand "size" "Total size of project's .stack-work/install" $
         sizeStackWork <$> dirOption <*> notHumanOpt
       , Subcommand "list" "list builds in .stack-work/install per ghc version" $
-        listStackWorkVersion <$> dirOption <*> optional ghcVerArg
+        listGhcSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
       , Subcommand "remove-version" "remove builds in .stack-work/install for a ghc version" $
         cleanGhcSnapshots . setStackWorkDir <$> dirOption <*> ghcVerArg
       , Subcommand "remove-older" "purge older builds in .stack-work/install" $
@@ -36,7 +36,7 @@ main = do
       [ Subcommand "size" "Total size of all stack build snapshots" $
         sizeSnapshots <$> notHumanOpt
       , Subcommand "list" "List build snapshots per ghc version" $
-        listGhcSnapshots <$> optional ghcVerArg
+        listGhcSnapshots setStackSnapshotsDir <$> optional ghcVerArg
       , Subcommand "remove-version" "Remove build snapshots for a ghc version" $
         cleanGhcSnapshots setStackSnapshotsDir <$> ghcVerArg
       ]
@@ -60,19 +60,6 @@ sizeStackWork mdir nothuman = do
   let path = fromMaybe "" mdir </> stackWorkInstall
   whenM (doesDirectoryExist path) $
     cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", path]
-
-listStackWorkVersion :: Maybe FilePath -> Maybe String -> IO ()
-listStackWorkVersion mdir mghcver = do
-  setStackWorkDir mdir
-  dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
-  case mghcver of
-    Nothing -> do
-      let ghcs = groupOn takeFileName dirs
-      mapM_ printTotalGhcSize ghcs
-    Just ghcver -> do
-      let ds = takeGhcSnapshots ghcver dirs
-      unless (null ds) $
-        cmd_ "du" ("-shc":ds)
 
 printTotalGhcSize :: [FilePath] -> IO ()
 printTotalGhcSize ds = do
@@ -102,9 +89,9 @@ sizeSnapshots nothuman = do
   home <- getHomeDirectory
   cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", home </> ".stack/snapshots"]
 
-listGhcSnapshots :: Maybe String -> IO ()
-listGhcSnapshots mghcver = do
-  setStackSnapshotsDir
+listGhcSnapshots :: IO () -> Maybe String -> IO ()
+listGhcSnapshots setdir mghcver = do
+  setdir
   dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
   case mghcver of
     Nothing -> do
