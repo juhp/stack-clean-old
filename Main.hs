@@ -40,6 +40,16 @@ main = do
       , Subcommand "remove-version" "Remove build snapshots for a ghc version" $
         cleanGhcSnapshots setStackSnapshotsDir <$> ghcVerArg
       ]
+    , Subcommand "ghc" "Commands on stack's ghc compiler installations" $
+      subcommands
+      [ Subcommand "size" "Total size of installed stack ghc compilers" $
+        sizeGhcInstalls <$> notHumanOpt
+      , Subcommand "list" "List installed stack ghc compiler versions" $
+        listGhcInstallation <$> optional ghcVerArg
+      , Subcommand "remove-version" "Remove installation of a stack ghc compiler version" $
+        removeGhcVersionInstallation <$> ghcVerArg
+      ]
+
     ]
   where
     notHumanOpt = switchWith 'H' "not-human-size" "Do not use du --human-readable"
@@ -145,3 +155,36 @@ cleanOldStackWork keep mdir = do
             files <- listDirectory "."
             timestamp <- maximum <$> mapM getModificationTime files
             return (dir, timestamp)
+
+stackProgramsDir :: FilePath
+stackProgramsDir = ".stack/programs"
+
+sizeGhcInstalls :: Bool -> IO ()
+sizeGhcInstalls nothuman = do
+  home <- getHomeDirectory
+  cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", home </> stackProgramsDir]
+
+setStackProgramsDir :: IO ()
+setStackProgramsDir = do
+  home <- getHomeDirectory
+  switchToSystemDirUnder $ home </> stackProgramsDir
+
+getGhcInstallDirs :: IO [FilePath]
+getGhcInstallDirs = do
+  setStackProgramsDir
+  listDirectory "." >>= fmap sort . filterM doesDirectoryExist
+
+listGhcInstallation :: Maybe String -> IO ()
+listGhcInstallation mghcver = do
+  dirs <- getGhcInstallDirs
+  mapM_ putStrLn $ case mghcver of
+    Nothing -> dirs
+    Just ghcver -> filter (ghcver `isSuffixOf`) dirs
+
+removeGhcVersionInstallation :: String -> IO ()
+removeGhcVersionInstallation ghcver = do
+  dirs <- getGhcInstallDirs
+  case filter (ghcver `isSuffixOf`) dirs of
+    [] -> error' $ "stack ghc compiler version " ++ ghcver ++ " not found"
+    [g] -> removeDirectoryRecursive g >> removeFile (g <.> "installed")
+    _ -> error' "more than one match found!!"
