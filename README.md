@@ -36,7 +36,7 @@ By default it keeps 5 newest builds per ghc version.
 
 The preservation/deletion is calculated and done per ghc version.
 
-NB: If you regularly build multiple branches/tags against the same LTS or ghc version then it may be safer to avoid using `remove-older`.
+NB: If you regularly build multiple branches/tags against the same LTS or ghc version then it is probably safer to avoid using `remove-older`.
 
 ## Installation
 
