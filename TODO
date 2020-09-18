@@ -1,1 +1,2 @@
 - track snapshot dependencies through package .conf files
+- clean up dist/ too
