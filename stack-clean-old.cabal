@@ -12,6 +12,7 @@ copyright:           2020  Jens Petersen <juhpetersen@gmail.com>
 homepage:            https://github.com/juhp/stack-clean-old
 bug-reports:         https://github.com/juhp/stack-clean-old/issues
 build-type:          Simple
+category:            Distribution
 extra-doc-files:     README.md
                      ChangeLog.md
 cabal-version:       1.18
