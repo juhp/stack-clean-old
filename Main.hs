@@ -210,7 +210,7 @@ getGhcInstallDirs = do
 
 listGhcInstallation :: Maybe String -> IO ()
 listGhcInstallation mghcver = do
-  dirs <- getGhcInstallDirs
+  dirs <- sortOn (readVersion . takeWhileEnd (/= '-')) <$> getGhcInstallDirs
   mapM_ putStrLn $ case mghcver of
     Nothing -> dirs
     Just ghcver -> filter (ghcver `isSuffixOf`) dirs
