@@ -27,11 +27,11 @@ main = do
       , Subcommand "list" "list builds in .stack-work/install per ghc version" $
         listGhcSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
       , Subcommand "remove-version" "remove builds in .stack-work/install for a ghc version" $
-        cleanGhcSnapshots . setStackWorkDir <$> dirOption <*> ghcVerArg
-      , Subcommand "remove-previous-minor" "remove builds in .stack-work/install for previous ghc minor versions" $
-        cleanMinorSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
+        cleanGhcSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> ghcVerArg
+      , Subcommand "remove-earlier-minor" "remove builds in .stack-work/install for previous ghc minor versions" $
+        cleanMinorSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> optional ghcVerArg
       , Subcommand "remove-older" "purge older builds in .stack-work/install" $
-        cleanOldStackWork <$> keepOption <*> optional (strArg "PROJECTDIR")
+        cleanOldStackWork <$> dryrun <*> keepOption <*> optional (strArg "PROJECTDIR")
       ]
     , Subcommand "snapshots" "Commands for ~/.stack/snapshots" $
       subcommands
@@ -40,7 +40,9 @@ main = do
       , Subcommand "list" "List build snapshots per ghc version" $
         listGhcSnapshots setStackSnapshotsDir <$> optional ghcVerArg
       , Subcommand "remove-version" "Remove build snapshots for a ghc version" $
-        cleanGhcSnapshots setStackSnapshotsDir <$> ghcVerArg
+        cleanGhcSnapshots setStackSnapshotsDir <$> dryrun <*> ghcVerArg
+      , Subcommand "remove-earlier-minor" "remove builds in .stack-work/install for previous ghc minor versions" $
+        cleanMinorSnapshots setStackSnapshotsDir <$> dryrun <*> optional ghcVerArg
       ]
     , Subcommand "ghc" "Commands on stack's ghc compiler installations" $
       subcommands
@@ -49,17 +51,18 @@ main = do
       , Subcommand "list" "List installed stack ghc compiler versions" $
         listGhcInstallation <$> optional ghcVerArg
       , Subcommand "remove-version" "Remove installation of a stack ghc compiler version" $
-        removeGhcVersionInstallation <$> ghcVerArg
+        removeGhcVersionInstallation <$> dryrun <*> ghcVerArg
       ]
-
     ]
   where
+    dryrun = switchWith 'n' "dryrun" "Show what would be done, without removing"
+
     notHumanOpt = switchWith 'H' "not-human-size" "Do not use du --human-readable"
 
     dirOption = optional (strOptionWith 'd' "dir" "PROJECTDIR" "Path to project")
     ghcVerArg = strArg "GHCVER"
 
-    keepOption = positive <$> optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version" 5
+    keepOption = positive <$> optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version [default 5]" 5
 
     positive :: Int -> Int
     positive n = if n > 0 then n else error' "Must be positive integer"
@@ -114,15 +117,20 @@ listGhcSnapshots setdir mghcver = do
       unless (null dirs) $
         cmd_ "du" ("-shc":ds)
 
-cleanGhcSnapshots :: IO () -> String -> IO ()
-cleanGhcSnapshots setDir ghcver = do
+doRemoveDirectory :: Bool -> FilePath -> IO ()
+doRemoveDirectory dryrun dir =
+  unless dryrun $
+  removeDirectoryRecursive dir
+
+cleanGhcSnapshots :: IO () -> Bool -> String -> IO ()
+cleanGhcSnapshots setDir dryrun ghcver = do
   setDir
   dirs <- takeGhcSnapshots ghcver <$> getSnapshotDirs
-  mapM_ removeDirectoryRecursive dirs
+  mapM_ (doRemoveDirectory dryrun) dirs
   putStrLn $ show (length dirs) ++ " snapshots removed for " ++ ghcver
 
-cleanMinorSnapshots :: IO () -> Maybe String -> IO ()
-cleanMinorSnapshots setDir mghcver = do
+cleanMinorSnapshots :: IO () -> Bool -> Maybe String -> IO ()
+cleanMinorSnapshots setDir dryrun mghcver = do
   setDir
   dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
   case mghcver of
@@ -131,7 +139,7 @@ cleanMinorSnapshots setDir mghcver = do
       forM_ ghcs $ \ gmajor ->
         when (length gmajor > 1) $
         forM_ (init gmajor) $ \ gminor -> do
-          mapM_ removeDirectoryRecursive gminor
+          mapM_ (doRemoveDirectory dryrun) gminor
           putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
     Just ghcver -> do
       let major =
@@ -141,7 +149,7 @@ cleanMinorSnapshots setDir mghcver = do
           gmajor = groupOn takeFileName $ filter (olderMinor major (readVersion ghcver)) dirs
       when (length gmajor > 1) $
         forM_ (init gmajor) $ \ gminor -> do
-          mapM_ removeDirectoryRecursive gminor
+          mapM_ (doRemoveDirectory dryrun) gminor
           putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
   where
     majorVersion :: FilePath -> Version
@@ -165,8 +173,8 @@ switchToSystemDirUnder dir = do
         _ -> error' "More than one OS systems found " ++ dir ++ " (unsupported)"
   setCurrentDirectory system
 
-cleanOldStackWork :: Int -> Maybe FilePath -> IO ()
-cleanOldStackWork keep mdir = do
+cleanOldStackWork :: Bool -> Int -> Maybe FilePath -> IO ()
+cleanOldStackWork dryrun keep mdir = do
   setStackWorkDir mdir
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
   let ghcs = groupOn takeFileName dirs
@@ -176,7 +184,7 @@ cleanOldStackWork keep mdir = do
     removeOlder dirs = do
       let ghcver = (takeFileName . head) dirs
       oldfiles <- drop keep . reverse <$> sortedByAge
-      mapM_ (removeDirectoryRecursive . takeDirectory) oldfiles
+      mapM_ (doRemoveDirectory dryrun . takeDirectory) oldfiles
       unless (null oldfiles) $
         putStrLn $ show (length oldfiles) ++ " dirs removed for " ++ ghcver
       where
@@ -215,10 +223,10 @@ listGhcInstallation mghcver = do
     Nothing -> dirs
     Just ghcver -> filter (ghcver `isSuffixOf`) dirs
 
-removeGhcVersionInstallation :: String -> IO ()
-removeGhcVersionInstallation ghcver = do
+removeGhcVersionInstallation :: Bool -> String -> IO ()
+removeGhcVersionInstallation dryrun ghcver = do
   dirs <- getGhcInstallDirs
   case filter (ghcver `isSuffixOf`) dirs of
     [] -> error' $ "stack ghc compiler version " ++ ghcver ++ " not found"
-    [g] -> removeDirectoryRecursive g >> removeFile (g <.> "installed")
+    [g] -> doRemoveDirectory dryrun g >> unless dryrun (removeFile (g <.> "installed"))
     _ -> error' "more than one match found!!"
