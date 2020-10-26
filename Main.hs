@@ -52,6 +52,8 @@ main = do
         listGhcInstallation <$> optional ghcVerArg
       , Subcommand "remove-version" "Remove installation of a stack ghc compiler version" $
         removeGhcVersionInstallation <$> dryrun <*> ghcVerArg
+      , Subcommand "remove-earlier-minor" "remove installations of stack ghc previous minor versions" $
+        removeGhcMinorInstallation <$> dryrun <*> optional ghcVerArg
       ]
     ]
   where
@@ -152,14 +154,14 @@ cleanMinorSnapshots setDir dryrun mghcver = do
           mapM_ (doRemoveDirectory dryrun) gminor
           putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
   where
-    majorVersion :: FilePath -> Version
-    majorVersion =
-      makeVersion . init . versionBranch . readVersion . takeFileName
-
     olderMinor :: Version -> Version -> FilePath -> Bool
     olderMinor major ghcver d =
       ((== major) . majorVersion) d &&
       ((< ghcver) . readVersion . takeFileName) d
+
+majorVersion :: FilePath -> Version
+majorVersion =
+  makeVersion . init . versionBranch . readVersion . takeFileName
 
 switchToSystemDirUnder :: FilePath -> IO ()
 switchToSystemDirUnder dir = do
@@ -226,7 +228,25 @@ listGhcInstallation mghcver = do
 removeGhcVersionInstallation :: Bool -> String -> IO ()
 removeGhcVersionInstallation dryrun ghcver = do
   dirs <- getGhcInstallDirs
-  case filter (ghcver `isSuffixOf`) dirs of
+  case filter (('-':ghcver) `isSuffixOf`) dirs of
     [] -> error' $ "stack ghc compiler version " ++ ghcver ++ " not found"
-    [g] -> doRemoveDirectory dryrun g >> unless dryrun (removeFile (g <.> "installed"))
+    [g] -> doRemoveGhcVersion dryrun g
     _ -> error' "more than one match found!!"
+
+removeGhcMinorInstallation :: Bool -> Maybe String -> IO ()
+removeGhcMinorInstallation dryrun mghcver = do
+  dirs <- sortOn (readVersion . takeWhileEnd (/= '-')) <$> getGhcInstallDirs
+  case mghcver of
+    Nothing -> do
+      let majors = groupOn (majorVersion . takeWhileEnd (/= '-')) dirs
+      forM_ majors $ \ minors ->
+        forM_ (init minors) $ doRemoveGhcVersion dryrun
+    Just ghcver -> do
+      let minors = filter ((== majorVersion ghcver) . majorVersion) dirs
+      forM_ (init minors) $ doRemoveGhcVersion dryrun
+
+doRemoveGhcVersion :: Bool -> FilePath -> IO ()
+doRemoveGhcVersion dryrun ghcinst = do
+  doRemoveDirectory dryrun ghcinst
+  unless dryrun (removeFile (ghcinst <.> "installed"))
+  putStrLn $ ghcinst ++ " removed"
