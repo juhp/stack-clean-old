@@ -27,7 +27,7 @@ executable stack-clean-old
 --  hs-source-dirs:      app
   build-depends:       base < 5
                      , directory >= 1.2.5
-                     , extra
+                     , extra >= 1.4.3
                      , filepath
                      , simple-cmd >= 0.1.4
                      , simple-cmd-args >= 0.1.2
