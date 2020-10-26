@@ -28,6 +28,8 @@ main = do
         listGhcSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
       , Subcommand "remove-version" "remove builds in .stack-work/install for a ghc version" $
         cleanGhcSnapshots . setStackWorkDir <$> dirOption <*> ghcVerArg
+      , Subcommand "remove-previous-minor" "remove builds in .stack-work/install for previous ghc minor versions" $
+        cleanMinorSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
       , Subcommand "remove-older" "purge older builds in .stack-work/install" $
         cleanOldStackWork <$> keepOption <*> optional (strArg "PROJECTDIR")
       ]
@@ -118,6 +120,38 @@ cleanGhcSnapshots setDir ghcver = do
   dirs <- takeGhcSnapshots ghcver <$> getSnapshotDirs
   mapM_ removeDirectoryRecursive dirs
   putStrLn $ show (length dirs) ++ " snapshots removed for " ++ ghcver
+
+cleanMinorSnapshots :: IO () -> Maybe String -> IO ()
+cleanMinorSnapshots setDir mghcver = do
+  setDir
+  dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
+  case mghcver of
+    Nothing -> do
+      let ghcs = map (groupOn takeFileName) $ groupOn majorVersion dirs
+      forM_ ghcs $ \ gmajor ->
+        when (length gmajor > 1) $
+        forM_ (init gmajor) $ \ gminor -> do
+          mapM_ removeDirectoryRecursive gminor
+          putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
+    Just ghcver -> do
+      let major =
+            if length ('.' `elemIndices` ghcver) == 2
+            then majorVersion ghcver
+            else error' "Please specify minor version X.Y.Z"
+          gmajor = groupOn takeFileName $ filter (olderMinor major (readVersion ghcver)) dirs
+      when (length gmajor > 1) $
+        forM_ (init gmajor) $ \ gminor -> do
+          mapM_ removeDirectoryRecursive gminor
+          putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
+  where
+    majorVersion :: FilePath -> Version
+    majorVersion =
+      makeVersion . init . versionBranch . readVersion . takeFileName
+
+    olderMinor :: Version -> Version -> FilePath -> Bool
+    olderMinor major ghcver d =
+      ((== major) . majorVersion) d &&
+      ((< ghcver) . readVersion . takeFileName) d
 
 switchToSystemDirUnder :: FilePath -> IO ()
 switchToSystemDirUnder dir = do
