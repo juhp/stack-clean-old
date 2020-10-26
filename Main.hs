@@ -24,13 +24,13 @@ main = do
       subcommands
       [ Subcommand "size" "Total size of project's .stack-work/install" $
         sizeStackWork <$> dirOption <*> notHumanOpt
-      , Subcommand "list" "list builds in .stack-work/install per ghc version" $
+      , Subcommand "list" "List builds in .stack-work/install per ghc version" $
         listGhcSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
-      , Subcommand "remove-version" "remove builds in .stack-work/install for a ghc version" $
+      , Subcommand "remove-version" "Remove builds in .stack-work/install for a ghc version" $
         cleanGhcSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> ghcVerArg
-      , Subcommand "remove-earlier-minor" "remove builds in .stack-work/install for previous ghc minor versions" $
+      , Subcommand "remove-earlier-minor" "Remove builds in .stack-work/install for previous ghc minor versions" $
         cleanMinorSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> optional ghcVerArg
-      , Subcommand "remove-older" "purge older builds in .stack-work/install" $
+      , Subcommand "remove-older" "Purge older builds in .stack-work/install" $
         cleanOldStackWork <$> dryrun <*> keepOption <*> optional (strArg "PROJECTDIR")
       ]
     , Subcommand "snapshots" "Commands for ~/.stack/snapshots" $
@@ -41,7 +41,7 @@ main = do
         listGhcSnapshots setStackSnapshotsDir <$> optional ghcVerArg
       , Subcommand "remove-version" "Remove build snapshots for a ghc version" $
         cleanGhcSnapshots setStackSnapshotsDir <$> dryrun <*> ghcVerArg
-      , Subcommand "remove-earlier-minor" "remove builds in .stack-work/install for previous ghc minor versions" $
+      , Subcommand "remove-earlier-minor" "Remove build snapshots for previous ghc minor versions" $
         cleanMinorSnapshots setStackSnapshotsDir <$> dryrun <*> optional ghcVerArg
       ]
     , Subcommand "ghc" "Commands on stack's ghc compiler installations" $
@@ -52,7 +52,7 @@ main = do
         listGhcInstallation <$> optional ghcVerArg
       , Subcommand "remove-version" "Remove installation of a stack ghc compiler version" $
         removeGhcVersionInstallation <$> dryrun <*> ghcVerArg
-      , Subcommand "remove-earlier-minor" "remove installations of stack ghc previous minor versions" $
+      , Subcommand "remove-earlier-minor" "Remove installations of stack ghc previous minor versions" $
         removeGhcMinorInstallation <$> dryrun <*> optional ghcVerArg
       ]
     ]
