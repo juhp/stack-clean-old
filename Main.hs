@@ -11,12 +11,14 @@ import SimpleCmd
 import SimpleCmdArgs
 import System.Directory
 import System.FilePath
+import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 import Text.Printf
 
 import Paths_stack_clean_old (version)
 
 main :: IO ()
 main = do
+  hSetBuffering stdout NoBuffering
   simpleCmdArgs (Just version) "Stack clean up tool"
     "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace." $
     subcommands
@@ -62,7 +64,7 @@ main = do
     notHumanOpt = switchWith 'H' "not-human-size" "Do not use du --human-readable"
 
     dirOption = optional (strOptionWith 'd' "dir" "PROJECTDIR" "Path to project")
-    ghcVerArg = strArg "GHCVER"
+    ghcVerArg = readVersion <$> strArg "GHCVER"
 
     keepOption = positive <$> optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version [default 5]" 5
 
@@ -97,22 +99,25 @@ getSnapshotDirs :: IO [FilePath]
 getSnapshotDirs = do
   lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
 
-takeGhcSnapshots :: String -> [FilePath] -> [FilePath]
+takeGhcSnapshots :: Version -> [FilePath] -> [FilePath]
 takeGhcSnapshots ghcver =
-  map takeDirectory . filter ((== ghcver) . takeFileName)
+  map takeDirectory . filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . readVersion . takeFileName)
 
 sizeSnapshots :: Bool -> IO ()
 sizeSnapshots nothuman = do
   home <- getHomeDirectory
   cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", home </> ".stack/snapshots"]
 
-listGhcSnapshots :: IO () -> Maybe String -> IO ()
+listGhcSnapshots :: IO () -> Maybe Version -> IO ()
 listGhcSnapshots setdir mghcver = do
   setdir
   dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
   case mghcver of
     Nothing -> do
       let ghcs = groupOn takeFileName dirs
+      mapM_ printTotalGhcSize ghcs
+    Just ghcver | isMajorVersion ghcver -> do
+      let ghcs = groupOn takeFileName $ filter ((== ghcver) . majorVersion . readVersion . takeFileName) dirs
       mapM_ printTotalGhcSize ghcs
     Just ghcver -> do
       let ds = takeGhcSnapshots ghcver dirs
@@ -124,20 +129,25 @@ doRemoveDirectory dryrun dir =
   unless dryrun $
   removeDirectoryRecursive dir
 
-cleanGhcSnapshots :: IO () -> Bool -> String -> IO ()
+cleanGhcSnapshots :: IO () -> Bool -> Version -> IO ()
 cleanGhcSnapshots setDir dryrun ghcver = do
   setDir
   dirs <- takeGhcSnapshots ghcver <$> getSnapshotDirs
-  mapM_ (doRemoveDirectory dryrun) dirs
-  putStrLn $ show (length dirs) ++ " snapshots removed for " ++ ghcver
+  unless (dryrun || null dirs) $
+    when (isMajorVersion ghcver) $ do
+    putStr $ "Press Enter to delete all " ++ showVersion ghcver ++ " builds: "
+    void getLine
+  unless (null dirs) $ do
+    mapM_ (doRemoveDirectory dryrun) dirs
+    putStrLn $ show (length dirs) ++ " snapshots removed for " ++ showVersion ghcver
 
-cleanMinorSnapshots :: IO () -> Bool -> Maybe String -> IO ()
+cleanMinorSnapshots :: IO () -> Bool -> Maybe Version -> IO ()
 cleanMinorSnapshots setDir dryrun mghcver = do
   setDir
   dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
   case mghcver of
     Nothing -> do
-      let ghcs = map (groupOn takeFileName) $ groupOn majorVersion dirs
+      let ghcs = map (groupOn takeFileName) $ groupOn (majorVersion . readVersion) dirs
       forM_ ghcs $ \ gmajor ->
         when (length gmajor > 1) $
         forM_ (init gmajor) $ \ gminor -> do
@@ -145,10 +155,10 @@ cleanMinorSnapshots setDir dryrun mghcver = do
           putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
     Just ghcver -> do
       let major =
-            if length ('.' `elemIndices` ghcver) == 2
+            if length (versionBranch ghcver) == 2
             then majorVersion ghcver
             else error' "Please specify minor version X.Y.Z"
-          gmajor = groupOn takeFileName $ filter (olderMinor major (readVersion ghcver)) dirs
+          gmajor = groupOn takeFileName $ filter (olderMinor major ghcver) dirs
       when (length gmajor > 1) $
         forM_ (init gmajor) $ \ gminor -> do
           mapM_ (doRemoveDirectory dryrun) gminor
@@ -156,12 +166,16 @@ cleanMinorSnapshots setDir dryrun mghcver = do
   where
     olderMinor :: Version -> Version -> FilePath -> Bool
     olderMinor major ghcver d =
-      ((== major) . majorVersion) d &&
+      ((== major) . majorVersion . readVersion) d &&
       ((< ghcver) . readVersion . takeFileName) d
 
-majorVersion :: FilePath -> Version
-majorVersion =
-  makeVersion . init . versionBranch . readVersion . takeFileName
+majorVersion :: Version -> Version
+majorVersion ver =
+  let vernums = versionBranch ver in
+    case length vernums of
+      2 -> ver
+      3 -> (makeVersion . init) vernums
+      _ -> error' $ "Bad ghc version " ++ showVersion ver
 
 switchToSystemDirUnder :: FilePath -> IO ()
 switchToSystemDirUnder dir = do
@@ -218,31 +232,43 @@ getGhcInstallDirs = do
   setStackProgramsDir
   listDirectory "." >>= fmap sort . filterM doesDirectoryExist
 
-listGhcInstallation :: Maybe String -> IO ()
+ghcInstallVersion :: FilePath -> Version
+ghcInstallVersion =
+  readVersion . takeWhileEnd (/= '-')
+
+isMajorVersion :: Version -> Bool
+isMajorVersion ver =
+  majorVersion ver == ver
+
+listGhcInstallation :: Maybe Version -> IO ()
 listGhcInstallation mghcver = do
-  dirs <- sortOn (readVersion . takeWhileEnd (/= '-')) <$> getGhcInstallDirs
+  dirs <- sortOn ghcInstallVersion <$> getGhcInstallDirs
   mapM_ putStrLn $ case mghcver of
     Nothing -> dirs
-    Just ghcver -> filter (ghcver `isSuffixOf`) dirs
+    Just ghcver -> filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . ghcInstallVersion) dirs
 
-removeGhcVersionInstallation :: Bool -> String -> IO ()
+removeGhcVersionInstallation :: Bool -> Version -> IO ()
 removeGhcVersionInstallation dryrun ghcver = do
-  dirs <- getGhcInstallDirs
-  case filter (('-':ghcver) `isSuffixOf`) dirs of
-    [] -> error' $ "stack ghc compiler version " ++ ghcver ++ " not found"
-    [g] -> doRemoveGhcVersion dryrun g
-    _ -> error' "more than one match found!!"
+  installs <- filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . ghcInstallVersion) <$> getGhcInstallDirs
+  case installs of
+    [] -> error' $ "stack ghc compiler version " ++ showVersion ghcver ++ " not found"
+    [g] | not (isMajorVersion ghcver) -> doRemoveGhcVersion dryrun g
+    gs -> if isMajorVersion ghcver then do
+      putStr $ "Press Enter to delete all stack " ++ showVersion ghcver ++ " installations: "
+      void getLine
+      mapM_ (doRemoveGhcVersion dryrun) gs
+      else error' "more than one match found!!"
 
-removeGhcMinorInstallation :: Bool -> Maybe String -> IO ()
+removeGhcMinorInstallation :: Bool -> Maybe Version -> IO ()
 removeGhcMinorInstallation dryrun mghcver = do
-  dirs <- sortOn (readVersion . takeWhileEnd (/= '-')) <$> getGhcInstallDirs
+  dirs <- sortOn ghcInstallVersion <$> getGhcInstallDirs
   case mghcver of
     Nothing -> do
-      let majors = groupOn (majorVersion . takeWhileEnd (/= '-')) dirs
+      let majors = groupOn (majorVersion . ghcInstallVersion) dirs
       forM_ majors $ \ minors ->
         forM_ (init minors) $ doRemoveGhcVersion dryrun
     Just ghcver -> do
-      let minors = filter ((== majorVersion ghcver) . majorVersion) dirs
+      let minors = filter ((== majorVersion ghcver) . majorVersion . readVersion) dirs
       forM_ (init minors) $ doRemoveGhcVersion dryrun
 
 doRemoveGhcVersion :: Bool -> FilePath -> IO ()

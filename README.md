@@ -34,21 +34,26 @@ and the subcommands:
 NB: If you remove all snapshot builds for a version of ghc, then you would have to rebuild again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
 
 ### Example usage
-To remove project builds for ghc-8.4.4:
+To remove project builds for ghc-8.2.2:
 ```
 $ stack-clean-old project list
+154M  8.2.2  (5 dirs)
 154M  8.4.4  (5 dirs)
-154M  8.6.5  (5 dirs)
-163M  8.8.4  (5 dirs)
-$ stack-clean-old project remove-version 8.4.4
+163M  8.6.5  (5 dirs)
+$ stack-clean-old project remove-version 8.2.2
 ```
 
-Remove all stack snapshot builds for ghc-8.0.1:
+Remove all stack ghc-8.4 snapshot builds before 8.4.4:
 ```
-$ stack-clean-old snapshots list
-489M  8.0.1  (8 dirs)
-799M  8.0.2  (24 dirs)
-$ stack-clean-old snapshots remove-earlier-minor 8.0.2
+$ stack-clean-old snapshots list 8.4
+421M  8.4.1  (7 dirs)
+368M  8.4.2  (6 dirs)
+489M  8.4.3  (8 dirs)
+799M  8.4.4  (24 dirs)
+$ stack-clean-old snapshots remove-earlier-minor 8.4.4
+7 dirs removed for 8.4.1
+6 dirs removed for 8.4.2
+8 dirs removed for 8.4.3
 ```
 
 ### Purging older stack project builds
