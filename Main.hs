@@ -121,7 +121,7 @@ listGhcSnapshots setdir mghcver = do
       mapM_ printTotalGhcSize ghcs
     Just ghcver -> do
       let ds = takeGhcSnapshots ghcver dirs
-      unless (null dirs) $
+      unless (null ds) $
         cmd_ "du" ("-shc":ds)
 
 doRemoveDirectory :: Bool -> FilePath -> IO ()
