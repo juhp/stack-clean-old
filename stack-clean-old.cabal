@@ -2,7 +2,7 @@ name:                stack-clean-old
 version:             0.2
 synopsis:            Clean away old stack build artefacts
 description:
-        A tool for cleaning away old stack snapshots and stack-work builds
+        A tool for cleaning away old .stack snapshots and .stack-work builds
         to recover diskspace.
 license:             BSD3
 license-file:        LICENSE

@@ -9,9 +9,9 @@ stack-clean-old [project|snapshots|ghc] [size|list|remove-version|remove-earlier
 ```
 These commands act respectively on:
 
-- the current local project (`.stack-work/install/`)
-- the user's stack snapshot builds (`~/.stack/snapshots/`)
-- installed stack ghc compilers  (`~/.stack/programs/`).
+- the current local **project**: `.stack-work/install/`
+- the user's stack **snapshot** builds: `~/.stack/snapshots/`
+- installed stack **ghc** compilers: `~/.stack/programs/`.
 
 and the subcommands:
 
@@ -28,7 +28,7 @@ and the subcommands:
     (the GHCVER argument is required).
 
 `remove-earlier-minor`:
-    removes for previous minor ghc versions.
+    removes the builds/installs for previous minor ghc versions.
     If GHCVER is given then only minor versions older than it are removed.
 
 NB: If you remove all snapshot builds for a version of ghc, then you would have to rebuild again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
@@ -56,6 +56,8 @@ $ stack-clean-old snapshots remove-earlier-minor 8.4.4
 8 dirs removed for 8.4.3
 ```
 
+Incidently I build my projects across as many major Stackage LTS versions as possible, and collectively this piles up to a lot of diskspace: so I wrote this tool to help manage that.
+
 ### Purging older stack project builds
 ```
 stack-clean-old project remove-older
@@ -65,7 +67,7 @@ By default it keeps 5 newest builds per ghc version.
 
 The preservation/deletion is calculated and done per ghc version.
 
-NB: If you regularly build multiple branches/tags against the same LTS or ghc version then it is better safer to avoid using `remove-older`.
+NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `remove-older`.
 
 ## Installation
 
@@ -80,4 +82,6 @@ Project: https://github.com/juhp/stack-clean-old
 Use at your own risk.
 
 The author takes no responsibility for any loss or damaged caused by using
-this tool. Bug reports, suggestions, and improvements are welcome.
+this tool.
+
+Bug reports, suggestions, and improvements are welcome.
