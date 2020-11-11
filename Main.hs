@@ -80,10 +80,11 @@ sizeStackWork mdir nothuman = do
   whenM (doesDirectoryExist path) $
     cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", path]
 
-printTotalGhcSize :: [FilePath] -> IO ()
-printTotalGhcSize ds = do
+printTotalGhcSize :: [SnapshotInstall] -> IO ()
+printTotalGhcSize snaps = do
+  let ds = map snapHash snaps
   total <- head . words . last <$> cmdLines "du" ("-shc":ds)
-  printf "%4s  %-6s (%d dirs)\n" total ((takeFileName . head) ds) (length ds)
+  printf "%4s  %-6s (%d dirs)\n" total ((showVersion . snapGHC . head) snaps) (length snaps)
 
 setStackWorkDir :: Maybe FilePath -> IO ()
 setStackWorkDir mdir = do
@@ -95,13 +96,30 @@ setStackSnapshotsDir = do
   home <- getHomeDirectory
   switchToSystemDirUnder $ home </> ".stack/snapshots"
 
-getSnapshotDirs :: IO [FilePath]
-getSnapshotDirs = do
-  lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
+data SnapshotInstall =
+  SnapInst { snapHash :: String,
+             snapGHC :: Version}
+  deriving Eq
 
-takeGhcSnapshots :: Version -> [FilePath] -> [FilePath]
+instance Ord SnapshotInstall where
+  compare s1 s2 = compare (snapGHC s1) (snapGHC s2)
+
+instance Show SnapshotInstall where
+  show (SnapInst hash ver) = hash </> showVersion ver
+
+readSnapshot :: FilePath -> SnapshotInstall
+readSnapshot pth =
+  let (hash,ver) = splitFileName pth
+  -- remove trailing '/'
+  in SnapInst (init hash) (readVersion ver)
+
+getSnapshotDirs :: IO [SnapshotInstall]
+getSnapshotDirs = do
+  map readSnapshot . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
+
+takeGhcSnapshots :: Version -> [SnapshotInstall] -> [FilePath]
 takeGhcSnapshots ghcver =
-  map takeDirectory . filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . readVersion . takeFileName)
+  map snapHash . filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . snapGHC)
 
 sizeSnapshots :: Bool -> IO ()
 sizeSnapshots nothuman = do
@@ -111,16 +129,16 @@ sizeSnapshots nothuman = do
 listGhcSnapshots :: IO () -> Maybe Version -> IO ()
 listGhcSnapshots setdir mghcver = do
   setdir
-  dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
+  snaps <- sort <$> getSnapshotDirs
   case mghcver of
     Nothing -> do
-      let ghcs = groupOn takeFileName dirs
+      let ghcs = groupOn snapGHC snaps
       mapM_ printTotalGhcSize ghcs
     Just ghcver | isMajorVersion ghcver -> do
-      let ghcs = groupOn takeFileName $ filter ((== ghcver) . majorVersion . readVersion . takeFileName) dirs
+      let ghcs = groupOn snapGHC $ filter ((== ghcver) . majorVersion . snapGHC) snaps
       mapM_ printTotalGhcSize ghcs
     Just ghcver -> do
-      let ds = takeGhcSnapshots ghcver dirs
+      let ds = takeGhcSnapshots ghcver snaps
       unless (null ds) $
         cmd_ "du" ("-shc":ds)
 
@@ -141,33 +159,33 @@ cleanGhcSnapshots setDir dryrun ghcver = do
     mapM_ (doRemoveDirectory dryrun) dirs
     putStrLn $ show (length dirs) ++ " snapshots removed for " ++ showVersion ghcver
 
+removeSnapInst :: Bool -> SnapshotInstall -> IO ()
+removeSnapInst dryrun =
+  doRemoveDirectory dryrun . snapHash
+
 cleanMinorSnapshots :: IO () -> Bool -> Maybe Version -> IO ()
 cleanMinorSnapshots setDir dryrun mghcver = do
   setDir
-  dirs <- sortOn (readVersion . takeFileName) <$> getSnapshotDirs
+  snaps <- sort <$> getSnapshotDirs
   case mghcver of
     Nothing -> do
-      let ghcs = map (groupOn takeFileName) $ groupOn (majorVersion . readVersion) dirs
+      let ghcs = map (groupOn snapGHC) $ groupOn (majorVersion . snapGHC) snaps
       forM_ ghcs $ \ gmajor ->
         when (length gmajor > 1) $
         forM_ (init gmajor) $ \ gminor -> do
-          mapM_ (doRemoveDirectory dryrun) gminor
-          putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
+          mapM_ (removeSnapInst dryrun) gminor
+          putStrLn $ show (length gminor) ++ " snapshots removed for " ++ showVersion (snapGHC (head gminor))
     Just ghcver -> do
-      let major =
-            if length (versionBranch ghcver) == 2
-            then majorVersion ghcver
-            else error' "Please specify minor version X.Y.Z"
-          gmajor = groupOn takeFileName $ filter (olderMinor major ghcver) dirs
-      when (length gmajor > 1) $
-        forM_ (init gmajor) $ \ gminor -> do
-          mapM_ (doRemoveDirectory dryrun) gminor
-          putStrLn $ show (length gminor) ++ " snapshots removed for " ++ takeFileName (head gminor)
-  where
-    olderMinor :: Version -> Version -> FilePath -> Bool
-    olderMinor major ghcver d =
-      ((== major) . majorVersion . readVersion) d &&
-      ((< ghcver) . readVersion . takeFileName) d
+      let major = majorVersion ghcver
+          ghcs = filter ((== major) . majorVersion . snapGHC) snaps
+          latestSnaps = groupOn snapGHC ghcs
+          newest = if major == ghcver
+                   then (snapGHC. head . last) latestSnaps
+                   else ghcver
+          gminors = groupOn snapGHC $ filter ((< newest) . snapGHC) ghcs
+      forM_ gminors $ \ gminor -> do
+        mapM_ (removeSnapInst dryrun) gminor
+        putStrLn $ show (length gminor) ++ " snapshots removed for " ++ showVersion (snapGHC (head gminor))
 
 majorVersion :: Version -> Version
 majorVersion ver =
@@ -183,6 +201,8 @@ switchToSystemDirUnder dir = do
     (setCurrentDirectory dir)
     (error' $ dir ++ "not found")
   systems <- listDirectory "."
+  -- FIXME be more precise/check "system" dirs
+  -- eg 64bit intel Linux: x86_64-linux-tinfo6
   let system = case systems of
         [] -> error' $ "No OS system in " ++ dir
         [sys] -> sys
