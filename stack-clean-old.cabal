@@ -24,7 +24,12 @@ source-repository head
 executable stack-clean-old
   main-is:             Main.hs
   other-modules:       Paths_stack_clean_old
---  hs-source-dirs:      app
+                       Directories
+                       GHC
+                       Remove
+                       Snapshots
+                       Versions
+  hs-source-dirs:      src
   build-depends:       base < 5
                      , directory >= 1.2.5
                      , extra >= 1.4.3
