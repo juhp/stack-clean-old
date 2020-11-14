@@ -1,6 +1,6 @@
 # Revision history for stack-clean-old-work
 
-## 0.2.1 (2020-11-11)
+## 0.2.1 (2020-11-14)
 - remove-earlier-minor can now take a major version
 - major internal refactors with VersionSnapshots type
 - split code into modules
