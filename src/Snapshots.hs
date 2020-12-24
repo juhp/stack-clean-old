@@ -10,7 +10,8 @@ module Snapshots (
   setStackSnapshotsDir,
   setStackWorkDir,
   sizeSnapshots,
-  sizeStackWork
+  sizeStackWork,
+  removeStackWorks
   )
 where
 
@@ -164,3 +165,13 @@ setStackWorkDir mdir = do
 setStackSnapshotsDir :: IO ()
 setStackSnapshotsDir = do
   getStackSubdir "snapshots" >>= switchToSystemDirUnder
+
+removeStackWorks :: Bool -> Maybe FilePath -> IO ()
+removeStackWorks dryrun mdir = do
+  whenJust mdir setCurrentDirectory
+  workdirs <- sort <$> cmdLines "find" ["-type", "d", "-name", ".stack-work"]
+  unless (null workdirs) $ do
+    mapM_ putStrLn workdirs
+    putStr "Press Enter to delete these '.stack-work' dirs: "
+    void getLine
+    mapM_ (Remove.doRemoveDirectory dryrun) workdirs

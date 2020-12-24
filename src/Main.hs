@@ -27,6 +27,8 @@ main = do
         cleanMinorSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> optional ghcVerArg
       , Subcommand "remove-older" "Purge older builds in .stack-work/install" $
         cleanOldStackWork <$> dryrun <*> keepOption <*> optional (strArg "PROJECTDIR")
+      , Subcommand "remove-work" "Remove .stack-work subdirs recursively" $
+        removeStackWorks <$> dryrun <*> optional (strArg "PROJECTDIR")
       ]
     , Subcommand "snapshots" "Commands for ~/.stack/snapshots" $
       subcommands
