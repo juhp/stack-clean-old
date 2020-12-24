@@ -158,7 +158,7 @@ printTotalGhcSize versnaps = do
 
 setStackWorkDir :: Maybe FilePath -> IO ()
 setStackWorkDir mdir = do
-  whenJust mdir $ \ dir -> setCurrentDirectory dir
+  whenJust mdir setCurrentDirectory
   switchToSystemDirUnder stackWorkInstall
 
 setStackSnapshotsDir :: IO ()
