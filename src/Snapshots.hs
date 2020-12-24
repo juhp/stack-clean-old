@@ -172,6 +172,6 @@ removeStackWorks dryrun mdir = do
   workdirs <- sort <$> cmdLines "find" ["-type", "d", "-name", ".stack-work"]
   unless (null workdirs) $ do
     mapM_ putStrLn workdirs
-    putStr "Press Enter to delete these '.stack-work' dirs: "
+    putStr "Press Enter to delete these dirs: "
     void getLine
     mapM_ (Remove.doRemoveDirectory dryrun) workdirs
