@@ -69,6 +69,9 @@ The preservation/deletion is calculated and done per ghc version.
 
 NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `remove-older`.
 
+Also `stack-clean-old project remove-work` can be used to recursively remove
+all `.stack-work/` dirs from a project to save space.
+
 ## Installation
 
 Run `stack install` or `cabal install`
