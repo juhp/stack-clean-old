@@ -33,6 +33,9 @@ and the subcommands:
 
 NB: If you remove all snapshot builds for a version of ghc, then you would have to rebuild again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
 
+NBB: All the command support `--dryrun` (`-n`) so you can check the effect
+of running them safely beforehand.
+
 ### Example usage
 To remove project builds for ghc-8.2.2:
 ```
