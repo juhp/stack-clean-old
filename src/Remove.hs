@@ -4,10 +4,16 @@ module Remove (
   )
 where
 
-import Control.Monad
-import System.Directory
+import Control.Monad.Extra
+import qualified System.Directory as D
 
 doRemoveDirectory :: Bool -> FilePath -> IO ()
 doRemoveDirectory dryrun dir =
   unless dryrun $
-  removeDirectoryRecursive dir
+  D.removeDirectoryRecursive dir
+
+removeFile :: Bool -> FilePath -> IO ()
+removeFile dryrun file =
+  unless dryrun $
+  whenM (D.doesFileExist file) $
+  D.removeFile file

@@ -78,5 +78,5 @@ removeGhcMinorInstallation dryrun mghcver = do
 doRemoveGhcVersion :: Bool -> FilePath -> IO ()
 doRemoveGhcVersion dryrun ghcinst = do
   Remove.doRemoveDirectory dryrun ghcinst
-  unless dryrun (Remove.removeFile (ghcinst <.> "installed"))
+  Remove.removeFile dryrun (ghcinst <.> "installed")
   putStrLn $ ghcinst ++ " removed"
