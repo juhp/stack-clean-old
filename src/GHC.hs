@@ -42,12 +42,12 @@ getGhcInstallDirs mghcver = do
 
 ghcInstallVersion :: FilePath -> Version
 ghcInstallVersion =
-  readVersion . takeWhileEnd (/= '-')
+  readVersion . takeWhileEnd (/= '-') .  dropSuffix ".temp"
 
 listGhcInstallation :: Maybe Version -> IO ()
 listGhcInstallation mghcver = do
   dirs <- getGhcInstallDirs mghcver
-  mapM_ (putStrLn . showVersion . ghcInstallVersion) $ case mghcver of
+  mapM_ putStrLn $ case mghcver of
     Nothing -> dirs
     Just ghcver -> filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . ghcInstallVersion) dirs
 
