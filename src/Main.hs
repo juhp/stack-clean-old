@@ -27,13 +27,13 @@ main = do
       sizeCmd <$> modeOpt <*> notHumanOpt
     , Subcommand "list" "List sizes per ghc version" $
       listCmd <$> modeOpt <*> optional ghcVerArg
-    , Subcommand "remove-version" "Remove for a ghc version" $
-      removeVersionCmd <$> dryrun <*> modeOpt <*> ghcVerArg
-    , Subcommand "remove-earlier-minor" "Remove for previous ghc minor versions" $
-      removeEarlierMinorCmd <$> dryrun <*> modeOpt <*> optional ghcVerArg
-    , Subcommand "remove-older" "Purge older builds in .stack-work/install" $
+    , Subcommand "remove" "Remove for a ghc version" $
+      removeCmd <$> dryrun <*> modeOpt <*> ghcVerArg
+    , Subcommand "remove-minors" "Remove for previous ghc minor versions" $
+      removeMinorsCmd <$> dryrun <*> modeOpt <*> optional ghcVerArg
+    , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
       cleanOldStackWork <$> dryrun <*> keepOption
-    , Subcommand "remove-work" "Remove .stack-work subdirs recursively" $
+    , Subcommand "delete-work" "Remove project's .stack-work subdirs recursively" $
       removeStackWorks <$> dryrun
     ]
   where
@@ -85,32 +85,32 @@ listCmd mode mver =
         then listCmd Project mver
         else listCmd GHC mver
 
-removeVersionCmd :: Bool -> Mode -> Version -> IO ()
-removeVersionCmd dryrun mode ghcver =
+removeCmd :: Bool -> Mode -> Version -> IO ()
+removeCmd dryrun mode ghcver =
   case mode of
     Project -> cleanGhcSnapshots setStackWorkDir dryrun ghcver
     Snapshots -> cleanGhcSnapshots setStackSnapshotsDir dryrun ghcver
     Compilers -> removeGhcVersionInstallation dryrun ghcver
     GHC -> do
-      removeVersionCmd dryrun Compilers ghcver
-      removeVersionCmd dryrun Snapshots ghcver
+      removeCmd dryrun Compilers ghcver
+      removeCmd dryrun Snapshots ghcver
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then removeVersionCmd dryrun Project ghcver
-        else removeVersionCmd dryrun GHC ghcver
+        then removeCmd dryrun Project ghcver
+        else removeCmd dryrun GHC ghcver
 
-removeEarlierMinorCmd :: Bool -> Mode -> Maybe Version -> IO ()
-removeEarlierMinorCmd dryrun mode mver =
+removeMinorsCmd :: Bool -> Mode -> Maybe Version -> IO ()
+removeMinorsCmd dryrun mode mver =
   case mode of
     Project -> cleanMinorSnapshots setStackWorkDir dryrun mver
     Snapshots -> cleanMinorSnapshots setStackSnapshotsDir dryrun mver
     Compilers -> removeGhcMinorInstallation dryrun mver
     GHC -> do
-      removeEarlierMinorCmd dryrun Compilers mver
-      removeEarlierMinorCmd dryrun Snapshots mver
+      removeMinorsCmd dryrun Compilers mver
+      removeMinorsCmd dryrun Snapshots mver
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then removeEarlierMinorCmd dryrun Project mver
-        else removeEarlierMinorCmd dryrun GHC mver
+        then removeMinorsCmd dryrun Project mver
+        else removeMinorsCmd dryrun GHC mver
