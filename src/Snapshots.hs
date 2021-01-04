@@ -17,7 +17,6 @@ where
 
 import Control.Monad.Extra
 import Data.List.Extra
-import Data.Maybe
 import Data.Version.Extra
 import SimpleCmd
 #if MIN_VERSION_simple_cmd(0,2,1)
@@ -118,9 +117,9 @@ cleanMinorSnapshots setDir dryrun mghcver = do
           gminors = filter ((< newestMinor) . snapsVersion) ghcs
       mapM_ (removeVersionSnaps dryrun) gminors
 
-cleanOldStackWork :: Bool -> Int -> Maybe FilePath -> IO ()
-cleanOldStackWork dryrun keep mdir = do
-  setStackWorkDir mdir
+cleanOldStackWork :: Bool -> Int -> IO ()
+cleanOldStackWork dryrun keep = do
+  setStackWorkDir
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
   let ghcs = groupOn takeFileName dirs
   mapM_ removeOlder ghcs
@@ -146,9 +145,9 @@ cleanOldStackWork dryrun keep mdir = do
 stackWorkInstall :: FilePath
 stackWorkInstall = ".stack-work/install"
 
-sizeStackWork :: Maybe FilePath -> Bool -> IO ()
-sizeStackWork mdir nothuman = do
-  let path = fromMaybe "" mdir </> stackWorkInstall
+sizeStackWork :: Bool -> IO ()
+sizeStackWork nothuman = do
+  let path = stackWorkInstall
   whenM (doesDirectoryExist path) $
     cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", path]
 
@@ -157,18 +156,16 @@ printTotalGhcSize versnaps = do
   total <- head . words . last <$> cmdLines "du" ("-shc":snapsHashes versnaps)
   printf "%4s  %-6s (%d dirs)\n" total ((showVersion . snapsVersion) versnaps) (length (snapsHashes versnaps))
 
-setStackWorkDir :: Maybe FilePath -> IO ()
-setStackWorkDir mdir = do
-  whenJust mdir setCurrentDirectory
+setStackWorkDir :: IO ()
+setStackWorkDir = do
   switchToSystemDirUnder stackWorkInstall
 
 setStackSnapshotsDir :: IO ()
 setStackSnapshotsDir = do
   getStackSubdir "snapshots" >>= switchToSystemDirUnder
 
-removeStackWorks :: Bool -> Maybe FilePath -> IO ()
-removeStackWorks dryrun mdir = do
-  whenJust mdir setCurrentDirectory
+removeStackWorks :: Bool -> IO ()
+removeStackWorks dryrun = do
   workdirs <- sort <$> cmdLines "find" ["-type", "d", "-name", ".stack-work"]
   unless (null workdirs) $ do
     mapM_ putStrLn workdirs

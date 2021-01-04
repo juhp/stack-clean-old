@@ -1,13 +1,21 @@
+{-# LANGUAGE CPP #-}
+
 module Main (main) where
 
+#if !MIN_VERSION_simple_cmd_args(0,1,3)
+import Control.Applicative ((<|>))
+#endif
 import Data.Version.Extra
 import SimpleCmd
 import SimpleCmdArgs
+import System.Directory
 import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
 import GHC
 import Paths_stack_clean_old (version)
 import Snapshots
+
+data Mode = Default | Project | Snapshots | Compilers | GHC
 
 main :: IO ()
 main = do
@@ -15,53 +23,94 @@ main = do
   simpleCmdArgs (Just version) "Stack clean up tool"
     "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace." $
     subcommands
-    [ Subcommand "project" "Commands for project .stack-work builds" $
-      subcommands
-      [ Subcommand "size" "Total size of project's .stack-work/install" $
-        sizeStackWork <$> dirOption <*> notHumanOpt
-      , Subcommand "list" "List builds in .stack-work/install per ghc version" $
-        listGhcSnapshots . setStackWorkDir <$> dirOption <*> optional ghcVerArg
-      , Subcommand "remove-version" "Remove builds in .stack-work/install for a ghc version" $
-        cleanGhcSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> ghcVerArg
-      , Subcommand "remove-earlier-minor" "Remove builds in .stack-work/install for previous ghc minor versions" $
-        cleanMinorSnapshots . setStackWorkDir <$> dirOption <*> dryrun <*> optional ghcVerArg
-      , Subcommand "remove-older" "Purge older builds in .stack-work/install" $
-        cleanOldStackWork <$> dryrun <*> keepOption <*> optional (strArg "PROJECTDIR")
-      , Subcommand "remove-work" "Remove .stack-work subdirs recursively" $
-        removeStackWorks <$> dryrun <*> optional (strArg "PROJECTDIR")
-      ]
-    , Subcommand "snapshots" "Commands for ~/.stack/snapshots" $
-      subcommands
-      [ Subcommand "size" "Total size of all stack build snapshots" $
-        sizeSnapshots <$> notHumanOpt
-      , Subcommand "list" "List build snapshots per ghc version" $
-        listGhcSnapshots setStackSnapshotsDir <$> optional ghcVerArg
-      , Subcommand "remove-version" "Remove build snapshots for a ghc version" $
-        cleanGhcSnapshots setStackSnapshotsDir <$> dryrun <*> ghcVerArg
-      , Subcommand "remove-earlier-minor" "Remove build snapshots for previous ghc minor versions" $
-        cleanMinorSnapshots setStackSnapshotsDir <$> dryrun <*> optional ghcVerArg
-      ]
-    , Subcommand "ghc" "Commands on stack's ghc compiler installations" $
-      subcommands
-      [ Subcommand "size" "Total size of installed stack ghc compilers" $
-        sizeGhcInstalls <$> notHumanOpt
-      , Subcommand "list" "List installed stack ghc compiler versions" $
-        listGhcInstallation <$> optional ghcVerArg
-      , Subcommand "remove-version" "Remove installation of a stack ghc compiler version" $
-        removeGhcVersionInstallation <$> dryrun <*> ghcVerArg
-      , Subcommand "remove-earlier-minor" "Remove installations of stack ghc previous minor versions" $
-        removeGhcMinorInstallation <$> dryrun <*> optional ghcVerArg
-      ]
+    [ Subcommand "size" "Total size" $
+      sizeCmd <$> modeOpt <*> notHumanOpt
+    , Subcommand "list" "List sizes per ghc version" $
+      listCmd <$> modeOpt <*> optional ghcVerArg
+    , Subcommand "remove-version" "Remove for a ghc version" $
+      removeVersionCmd <$> dryrun <*> modeOpt <*> ghcVerArg
+    , Subcommand "remove-earlier-minor" "Remove for previous ghc minor versions" $
+      removeEarlierMinorCmd <$> dryrun <*> modeOpt <*> optional ghcVerArg
+    , Subcommand "remove-older" "Purge older builds in .stack-work/install" $
+      cleanOldStackWork <$> dryrun <*> keepOption
+    , Subcommand "remove-work" "Remove .stack-work subdirs recursively" $
+      removeStackWorks <$> dryrun
     ]
   where
+    modeOpt =
+      flagWith' Project 'p' "project" "Act on current project's .stack-work/" <|>
+      flagWith' Snapshots 's' "snapshots" "Act on ~/.stack/snapshots/" <|>
+      flagWith' Compilers 'c' "compilers" "Act on ~/.stack/programs/" <|>
+      flagWith Default GHC 'g' "ghc" "Act on both ~/.stack/{programs,snapshots}/"
+
     dryrun = switchWith 'n' "dry-run" "Show what would be done, without removing"
 
     notHumanOpt = switchWith 'H' "not-human-size" "Do not use du --human-readable"
 
-    dirOption = optional (strOptionWith 'd' "dir" "PROJECTDIR" "Path to project")
     ghcVerArg = readVersion <$> strArg "GHCVER"
 
     keepOption = positive <$> optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version [default 5]" 5
 
     positive :: Int -> Int
     positive n = if n > 0 then n else error' "Must be positive integer"
+
+
+sizeCmd :: Mode -> Bool -> IO ()
+sizeCmd mode notHuman =
+  case mode of
+    Project -> sizeStackWork notHuman
+    Snapshots -> sizeSnapshots notHuman
+    Compilers -> sizeGhcInstalls notHuman
+    GHC -> do
+          sizeCmd Compilers notHuman
+          sizeCmd Snapshots notHuman
+    Default -> do
+      isProject <- doesDirectoryExist ".stack-work"
+      if isProject
+        then sizeCmd Project notHuman
+        else sizeCmd GHC notHuman
+
+listCmd :: Mode -> Maybe Version -> IO ()
+listCmd mode mver =
+  case mode of
+    Project -> listGhcSnapshots setStackWorkDir mver
+    Snapshots -> listGhcSnapshots setStackSnapshotsDir mver
+    Compilers -> listGhcInstallation mver
+    GHC -> do
+      listCmd Compilers mver
+      listCmd Snapshots mver
+    Default -> do
+      isProject <- doesDirectoryExist ".stack-work"
+      if isProject
+        then listCmd Project mver
+        else listCmd GHC mver
+
+removeVersionCmd :: Bool -> Mode -> Version -> IO ()
+removeVersionCmd dryrun mode ghcver =
+  case mode of
+    Project -> cleanGhcSnapshots setStackWorkDir dryrun ghcver
+    Snapshots -> cleanGhcSnapshots setStackSnapshotsDir dryrun ghcver
+    Compilers -> removeGhcVersionInstallation dryrun ghcver
+    GHC -> do
+      removeVersionCmd dryrun Compilers ghcver
+      removeVersionCmd dryrun Snapshots ghcver
+    Default -> do
+      isProject <- doesDirectoryExist ".stack-work"
+      if isProject
+        then removeVersionCmd dryrun Project ghcver
+        else removeVersionCmd dryrun GHC ghcver
+
+removeEarlierMinorCmd :: Bool -> Mode -> Maybe Version -> IO ()
+removeEarlierMinorCmd dryrun mode mver =
+  case mode of
+    Project -> cleanMinorSnapshots setStackWorkDir dryrun mver
+    Snapshots -> cleanMinorSnapshots setStackSnapshotsDir dryrun mver
+    Compilers -> removeGhcMinorInstallation dryrun mver
+    GHC -> do
+      removeEarlierMinorCmd dryrun Compilers mver
+      removeEarlierMinorCmd dryrun Snapshots mver
+    Default -> do
+      isProject <- doesDirectoryExist ".stack-work"
+      if isProject
+        then removeEarlierMinorCmd dryrun Project mver
+        else removeEarlierMinorCmd dryrun GHC mver
