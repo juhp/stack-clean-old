@@ -29,7 +29,7 @@ main = do
       listCmd <$> modeOpt <*> optional ghcVerArg
     , Subcommand "remove" "Remove for a ghc version" $
       removeCmd <$> dryrun <*> modeOpt <*> ghcVerArg
-    , Subcommand "remove-minors" "Remove for previous ghc minor versions" $
+    , Subcommand "keep-minor" "Remove for previous ghc minor versions" $
       removeMinorsCmd <$> dryrun <*> modeOpt <*> optional ghcVerArg
     , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
       cleanOldStackWork <$> dryrun <*> keepOption

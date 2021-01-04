@@ -5,7 +5,7 @@
 - default to project if there is a .stack-work/ dir
 - rename commmands:
     remove-version -> remove
-    remove-earlier-minor -> remove-minors
+    remove-earlier-minor -> keep-minor
     remove-older -> purge-older
     remove-work -> delete-work
 - fix handling of partial ghc install .temp dirs (#2)
