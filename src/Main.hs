@@ -54,7 +54,7 @@ main = do
       ]
     ]
   where
-    dryrun = switchWith 'n' "dryrun" "Show what would be done, without removing"
+    dryrun = switchWith 'n' "dry-run" "Show what would be done, without removing"
 
     notHumanOpt = switchWith 'H' "not-human-size" "Do not use du --human-readable"
 
