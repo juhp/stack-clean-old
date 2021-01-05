@@ -5,79 +5,82 @@ snapshot builds and ghc versions, to recover diskspace.
 
 ## Usage
 ```
-stack-clean-old [project|snapshots|ghc] [size|list|remove-version|remove-earlier-minor] [GHCVER]
+stack-clean-old [size|list|remove|keep-minor] [(-p|--project) | (-g|--ghc)] [GHCVER]
 ```
-These commands act respectively on:
+The options:
 
-- the current local **project**: `.stack-work/install/`
-- the user's stack **snapshot** builds: `~/.stack/snapshots/`
-- installed stack **ghc** compilers: `~/.stack/programs/`.
+- `--project` (default in a stack project dir): act on `.stack-work/install/`
+- `--global` (default outside a project dir): act on `~/.stack/snapshots/` and `~/.stack/programs/`.
 
 and the subcommands:
 
 `size`:
-    prints the total size of the above directory
+    prints the total size of the above directories
     (`size` does not take a GHCVER argument).
 
 `list`:
     shows the total size and number of snapshots per ghc version
     (the GHCVER argument is optional).
 
-`remove-version`:
-    removes all snapshots for the specified ghc version
-    (the GHCVER argument is required).
+`remove`:
+    removes for the specified ghc version (the GHCVER argument is required).
 
-`remove-earlier-minor`:
+`keep-minor`:
     removes the builds/installs for previous minor ghc versions.
     If GHCVER is given then only minor versions older than it are removed.
 
 NB: If you remove all snapshot builds for a version of ghc, then you would have to rebuild again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
 
-NBB: All the command support `--dryrun` (`-n`) so you can check the effect
+NBB: All the command support `--dry-run` (`-n`) so you can check the effect
 of running them safely beforehand.
 
 ### Example usage
 To remove project builds for ghc-8.2.2:
 ```
-$ stack-clean-old project list
+$ stack-clean-old list
 154M  8.2.2  (5 dirs)
 154M  8.4.4  (5 dirs)
 163M  8.6.5  (5 dirs)
-$ stack-clean-old project remove-version 8.2.2
+$ stack-clean-old remove -p 8.2.2
 ```
 
-Remove all stack ghc-8.4 snapshot builds before 8.4.4:
+Remove all stack ghc-8.4 snapshot builds and compilers before 8.4.4:
 ```
-$ stack-clean-old snapshots list 8.4
+$ stack-clean-old list -g 8.4
 421M  8.4.1  (7 dirs)
 368M  8.4.2  (6 dirs)
 489M  8.4.3  (8 dirs)
 799M  8.4.4  (24 dirs)
-$ stack-clean-old snapshots remove-earlier-minor 8.4.4
+$ stack-clean-old keep-minor -g 8.4.4
+ghc-tinfo6-8.4.3 removed
 7 dirs removed for 8.4.1
 6 dirs removed for 8.4.2
 8 dirs removed for 8.4.3
 ```
 
-Incidently I build my projects across as many major Stackage LTS versions as possible, and collectively this piles up to a lot of diskspace: so I wrote this tool to help manage that.
+Incidently I build my projects across as many major Stackage LTS versions as possible (using my stack-all tool), and collectively this piles up to a lot of diskspace: so I wrote this tool to help manage that.
 
 ### Purging older stack project builds
 ```
-stack-clean-old project remove-older
+stack-clean-old purge-older
 ```
 This command removes older stack builds from `.stack-work/install/`.
 By default it keeps 5 newest builds per ghc version.
 
 The preservation/deletion is calculated and done per ghc version.
 
-NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `remove-older`.
+NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `purge-older`.
 
-Also `stack-clean-old project remove-work` can be used to recursively remove
+Also `stack-clean-old delete-work` can be used to recursively remove
 all `.stack-work/` dirs from a project to save space.
 
 ## Installation
 
 Run `stack install` or `cabal install`
+
+## Related
+This tool complements [stack-all](https://hackage.haskell.org/package/stack-all)
+which builds projects over LTS major versions and hence generates lot of stack builds.
 
 ## Contributing
 BSD license
