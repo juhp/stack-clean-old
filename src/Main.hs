@@ -34,7 +34,7 @@ main = do
     , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
       cleanOldStackWork <$> dryrun <*> keepOption
     , Subcommand "delete-work" "Remove project's .stack-work subdirs recursively" $
-      removeStackWorks <$> dryrun
+      removeStackWorks <$> dryrun <*> switchWith 'a' "all" "Find all .stack-work/ subdirs, even if current directory not a stack project"
     ]
   where
     modeOpt =
