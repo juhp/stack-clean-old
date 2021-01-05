@@ -58,8 +58,7 @@ removeGhcVersionInstallation dryrun ghcver = do
     [] -> putStrLn $ "stack ghc compiler version " ++ showVersion ghcver ++ " not found"
     [g] | not (isMajorVersion ghcver) -> doRemoveGhcVersion dryrun g
     gs -> if isMajorVersion ghcver then do
-      putStr $ "Press Enter to delete all stack ghc " ++ showVersion ghcver ++ " installations: "
-      void getLine
+      Remove.prompt dryrun ("all stack ghc " ++ showVersion ghcver ++ " installations: ")
       mapM_ (doRemoveGhcVersion dryrun) gs
       else error' "more than one match found!!"
 

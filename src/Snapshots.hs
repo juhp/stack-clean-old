@@ -96,8 +96,7 @@ cleanGhcSnapshots setDir dryrun ghcver = do
   setDir
   ghcs <- getSnapshotDirs (Just ghcver)
   when (isMajorVersion ghcver) $ do
-    putStr $ "Press Enter to delete all " ++ showVersion ghcver ++ " builds: "
-    void getLine
+    Remove.prompt dryrun ("all " ++ showVersion ghcver ++ " builds")
   mapM_ (removeVersionSnaps dryrun) ghcs
 
 cleanMinorSnapshots :: IO () -> Bool -> Maybe Version -> IO ()
@@ -169,6 +168,5 @@ removeStackWorks dryrun = do
   workdirs <- sort <$> cmdLines "find" ["-type", "d", "-name", ".stack-work"]
   unless (null workdirs) $ do
     mapM_ putStrLn workdirs
-    putStr "Press Enter to delete these dirs: "
-    void getLine
+    Remove.prompt dryrun "these dirs"
     mapM_ (Remove.doRemoveDirectory dryrun) workdirs

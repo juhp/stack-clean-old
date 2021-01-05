@@ -1,5 +1,6 @@
 module Remove (
   doRemoveDirectory,
+  prompt,
   removeFile
   )
 where
@@ -17,3 +18,9 @@ removeFile dryrun file =
   unless dryrun $
   whenM (D.doesFileExist file) $
   D.removeFile file
+
+prompt :: Bool -> String -> IO ()
+prompt dryrun str =
+  unless dryrun $ do
+  putStr $ "Press Enter to delete " ++ str ++ ": "
+  void getLine
