@@ -55,7 +55,7 @@ removeGhcVersionInstallation :: Bool -> Version -> IO ()
 removeGhcVersionInstallation dryrun ghcver = do
   installs <- getGhcInstallDirs (Just ghcver)
   case installs of
-    [] -> error' $ "stack ghc compiler version " ++ showVersion ghcver ++ " not found"
+    [] -> putStrLn $ "stack ghc compiler version " ++ showVersion ghcver ++ " not found"
     [g] | not (isMajorVersion ghcver) -> doRemoveGhcVersion dryrun g
     gs -> if isMajorVersion ghcver then do
       putStr $ "Press Enter to delete all stack ghc " ++ showVersion ghcver ++ " installations: "
