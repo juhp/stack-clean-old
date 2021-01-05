@@ -39,9 +39,9 @@ main = do
   where
     modeOpt =
       flagWith' Project 'p' "project" "Act on current project's .stack-work/ [default in project dir]" <|>
+      flagWith' GHC 'g' "global" "Act on both ~/.stack/{programs,snapshots}/ [default outside project dir]" <|>
       flagWith' Snapshots 's' "snapshots" "Act on ~/.stack/snapshots/" <|>
-      flagWith' Compilers 'c' "compilers" "Act on ~/.stack/programs/" <|>
-      flagWith Default GHC 'g' "ghc" "Act on both ~/.stack/{programs,snapshots}/ [default outside project dir]"
+      flagWith Default Compilers 'c' "compilers" "Act on ~/.stack/programs/"
 
     dryrun = switchWith 'n' "dry-run" "Show what would be done, without removing"
 
