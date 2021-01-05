@@ -89,7 +89,7 @@ removeVersionSnaps :: Bool -> VersionSnapshots -> IO ()
 removeVersionSnaps dryrun versnap = do
   let dirs = snapsHashes versnap
   mapM_ (Remove.doRemoveDirectory dryrun) dirs
-  putStrLn $ show (length dirs) ++ " snapshots removed for " ++ showVersion (snapsVersion versnap)
+  putStrLn $ show (length dirs) ++ " snapshots " ++ (if dryrun then "would be " else "") ++ "removed for " ++ showVersion (snapsVersion versnap)
 
 cleanGhcSnapshots :: IO () -> Bool -> Version -> IO ()
 cleanGhcSnapshots setDir dryrun ghcver = do

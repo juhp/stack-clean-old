@@ -79,4 +79,4 @@ doRemoveGhcVersion :: Bool -> FilePath -> IO ()
 doRemoveGhcVersion dryrun ghcinst = do
   Remove.doRemoveDirectory dryrun ghcinst
   Remove.removeFile dryrun (ghcinst <.> "installed")
-  putStrLn $ ghcinst ++ " removed"
+  putStrLn $ ghcinst ++ (if dryrun then " would be" else "") ++ " removed"
