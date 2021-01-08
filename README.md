@@ -1,16 +1,16 @@
 # stack-clean-old
 
 A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
-snapshot builds and ghc versions, to recover diskspace.
+snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
 ```
 stack-clean-old [size|list|remove|keep-minor] [(-p|--project) | (-g|--ghc)] [GHCVER]
 ```
-The options:
+Options:
 
 - `--project` (default in a stack project dir): act on `.stack-work/install/`
-- `--global` (default outside a project dir): act on `~/.stack/snapshots/` and `~/.stack/programs/`.
+- `--global` (default outside a project dir): act on `~/.stack/snapshots/` and `~/.stack/programs/`
 
 and the subcommands:
 
@@ -29,7 +29,7 @@ and the subcommands:
     removes the builds/installs for previous minor ghc versions.
     If GHCVER is given then only minor versions older than it are removed.
 
-NB: If you remove all snapshot builds for a version of ghc, then you would have to rebuild again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
+If you remove any needed snapshot builds for a version of ghc, then you would have to rebuild them again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
 
 NBB: All the command support `--dry-run` (`-n`) so you can check the effect
 of running them safely beforehand.
@@ -44,7 +44,7 @@ $ stack-clean-old list
 $ stack-clean-old remove -p 8.2.2
 ```
 
-Remove all stack ghc-8.4 snapshot builds and compilers before 8.4.4:
+Remove stack ghc-8.4 snapshot builds and compilers before 8.4.4:
 ```
 $ stack-clean-old list -g 8.4
 421M  8.4.1  (7 dirs)
@@ -72,7 +72,7 @@ The preservation/deletion is calculated and done per ghc version.
 NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `purge-older`.
 
 Also `stack-clean-old delete-work` can be used to recursively remove
-all `.stack-work/` dirs from a project to save space.
+_all_ `.stack-work/` dirs from a project to save space (seems same as `stack clean --full`).
 
 ## Installation
 
@@ -88,9 +88,6 @@ BSD license
 Project: https://github.com/juhp/stack-clean-old
 
 ## Warning disclaimer
-Use at your own risk.
-
-The author takes no responsibility for any loss or damaged caused by using
-this tool.
+Use at your own risk: the author takes no responsibility for any loss or damaged caused by using this tool, as also mentioned in LICENSE.
 
 Bug reports, suggestions, and improvements are welcome.
