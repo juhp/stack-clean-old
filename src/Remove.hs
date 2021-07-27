@@ -10,8 +10,9 @@ import qualified System.Directory as D
 
 doRemoveDirectory :: Bool -> FilePath -> IO ()
 doRemoveDirectory dryrun dir =
-  unless dryrun $
-  D.removeDirectoryRecursive dir
+  unless dryrun $ do
+    putStrLn $ "Removing " ++ show dir
+    D.removeDirectoryRecursive dir
 
 removeFile :: Bool -> FilePath -> IO ()
 removeFile dryrun file =
