@@ -25,7 +25,7 @@ switchToSystemDirUnder :: FilePath -> IO ()
 switchToSystemDirUnder dir = do
   ifM (doesDirectoryExist dir)
     (setCurrentDirectory dir)
-    (error' $ dir ++ "not found")
+    (error' $ dir ++ " not found")
   systems <- listDirectory "."
   -- FIXME be more precise/check "system" dirs
   -- eg 64bit intel Linux: x86_64-linux-tinfo6
