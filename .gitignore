@@ -1,0 +1,13 @@
+*~
+.#*
+*.bak
+.*.swp
+.*.swo
+*.o
+*.hi
+*~
+*#
+.DS_Store
+.stack-work
+TAGS
+tags

@@ -169,7 +169,8 @@ removeStackWorks dryrun allrecurse = do
     if allrecurse then return True
     else doesDirectoryExist ".stack-work"
   if recurse then do
-    workdirs <- sort <$> cmdLines "find" ["-type", "d", "-name", ".stack-work"]
+    -- ignore find errors (e.g. access rights)
+    workdirs <- sort . lines <$> cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
     unless (null workdirs) $ do
       mapM_ putStrLn workdirs
       Remove.prompt dryrun "these dirs"
