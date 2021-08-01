@@ -5,7 +5,7 @@ snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
 ```
-stack-clean-old [size|list|remove|keep-minor] [(-p|--project) | (-g|--ghc)] [GHCVER]
+stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-p|--project) | (-g|--ghc)] [GHCVER]
 ```
 Options:
 
@@ -29,10 +29,15 @@ and the subcommands:
     removes the builds/installs for previous minor ghc versions.
     If GHCVER is given then only minor versions older than it are removed.
 
-If you remove any needed snapshot builds for a version of ghc, then you would have to rebuild them again for any projects still using them, so removal should be used cautiously, but it can recover a lot of diskspace.
+`purge-older` and `delete-work`:
+    see sections below
 
-NBB: All the command support `--dry-run` (`-n`) so you can check the effect
-of running them safely beforehand.
+If you remove any needed snapshot builds for a version of ghc,
+then you would have to rebuild them again for any projects still using them,
+so removal should be used cautiously, but it can recover a lot of diskspace.
+
+NBB: All the command support `--dry-run` (`-n`), so please use it to
+check the effect of running them safely beforehand.
 
 ### Example usage
 To remove project builds for ghc-8.2.2:
@@ -71,8 +76,13 @@ The preservation/deletion is calculated and done per ghc version.
 
 NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `purge-older`.
 
-Also `stack-clean-old delete-work` can be used to recursively remove
-_all_ `.stack-work/` dirs from a project to save space (seems same as `stack clean --full`).
+### Deleting all `.stack-work/` subdirectories
+`stack-clean-old delete-work` can be used to recursively remove
+_all_ `.stack-work/` dirs from a project to save space
+(seems same as `stack clean --full`).
+
+`stack-clean-old delete-work --all` works from outside stack projects:
+please test with `--dry-run` first.
 
 ## Installation
 
