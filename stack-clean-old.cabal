@@ -9,7 +9,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Jens Petersen <juhpetersen@gmail.com>
 maintainer:          Jens Petersen <juhpetersen@gmail.com>
-copyright:           2020  Jens Petersen <juhpetersen@gmail.com>
+copyright:           2020-2021  Jens Petersen <juhpetersen@gmail.com>
 homepage:            https://github.com/juhp/stack-clean-old
 bug-reports:         https://github.com/juhp/stack-clean-old/issues
 build-type:          Simple
