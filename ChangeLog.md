@@ -1,4 +1,7 @@
-# Revision history for stack-clean-old-work
+# Release history for stack-clean-old-work
+
+## 0.3.1 (2021-08-01)
+- 'delete-work': use find -prune and ignore inaccessible files (@petrem, #4)
 
 ## 0.3 (2021-01-08)
 - drop subsubcommands to simplify UI
