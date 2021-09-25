@@ -8,19 +8,21 @@ where
 import Control.Monad.Extra
 import qualified System.Directory as D
 
-doRemoveDirectory :: Bool -> FilePath -> IO ()
-doRemoveDirectory dryrun dir =
-  unless dryrun $
+import Types
+
+doRemoveDirectory :: Deletion -> FilePath -> IO ()
+doRemoveDirectory deletion dir =
+  when (isDelete deletion) $
   D.removeDirectoryRecursive dir
 
-removeFile :: Bool -> FilePath -> IO ()
-removeFile dryrun file =
-  unless dryrun $
+removeFile :: Deletion -> FilePath -> IO ()
+removeFile deletion file =
+  when (isDelete deletion) $
   whenM (D.doesFileExist file) $
   D.removeFile file
 
-prompt :: Bool -> String -> IO ()
-prompt dryrun str =
-  unless dryrun $ do
+prompt :: Deletion -> String -> IO ()
+prompt deletion str =
+  when (isDelete deletion) $ do
   putStr $ "Press Enter to delete " ++ str ++ ": "
   void getLine

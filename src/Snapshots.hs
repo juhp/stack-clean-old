@@ -28,6 +28,7 @@ import Text.Printf
 
 import Directories (globDirs, getStackSubdir, switchToSystemDirUnder)
 import qualified Remove
+import Types
 import Versions
 
 data SnapshotInstall =
@@ -84,13 +85,13 @@ listGhcSnapshots mghcver = do
   ghcs <- getSnapshotDirs mghcver
   mapM_ printTotalGhcSize ghcs
 
-removeVersionSnaps :: Bool -> FilePath -> VersionSnapshots -> IO ()
-removeVersionSnaps dryrun cwd versnap = do
+removeVersionSnaps :: Deletion -> FilePath -> VersionSnapshots -> IO ()
+removeVersionSnaps deletion cwd versnap = do
   let dirs = snapsHashes versnap
   dir <- getCurrentDirectory
   home <- getHomeDirectory
-  putStrLn $ plural (length dirs) "dir" ++ " in " ++ renderDir home dir ++ " " ++ (if dryrun then "would be " else "") ++ "removed for " ++ showVersion (snapsVersion versnap)
-  mapM_ (Remove.doRemoveDirectory dryrun) dirs
+  putStrLn $ plural (length dirs) "dir" ++ " in " ++ renderDir home dir ++ " " ++ (if isDelete deletion then "" else "would be ") ++ "removed for " ++ showVersion (snapsVersion versnap)
+  mapM_ (Remove.doRemoveDirectory deletion) dirs
   where
     plural :: Int -> String -> String
     plural n thing = show n ++ " " ++ thing ++ if n == 1 then "" else "s"
@@ -101,31 +102,31 @@ removeVersionSnaps dryrun cwd versnap = do
         Just reldir -> reldir
         Nothing -> "~" </> dropPrefix (home ++ "/") fp
 
-cleanGhcSnapshots :: Bool -> FilePath -> Version -> IO ()
-cleanGhcSnapshots dryrun cwd ghcver = do
+cleanGhcSnapshots :: Deletion -> FilePath -> Version -> IO ()
+cleanGhcSnapshots deletion cwd ghcver = do
   ghcs <- getSnapshotDirs (Just ghcver)
   when (isMajorVersion ghcver) $ do
-    Remove.prompt dryrun ("all " ++ showVersion ghcver ++ " builds")
-  mapM_ (removeVersionSnaps dryrun cwd) ghcs
+    Remove.prompt deletion ("all " ++ showVersion ghcver ++ " builds")
+  mapM_ (removeVersionSnaps deletion cwd) ghcs
 
-cleanMinorSnapshots :: Bool -> FilePath -> Maybe Version -> IO ()
-cleanMinorSnapshots dryrun cwd mghcver = do
+cleanMinorSnapshots :: Deletion -> FilePath -> Maybe Version -> IO ()
+cleanMinorSnapshots deletion cwd mghcver = do
   ghcs <- getSnapshotDirs (majorVersion <$> mghcver)
   case mghcver of
     Nothing -> do
       let majors = groupOn (majorVersion . snapsVersion) ghcs
       forM_ majors $ \ gmajor ->
         when (length gmajor > 1) $
-        mapM_ (removeVersionSnaps dryrun cwd) (init gmajor)
+        mapM_ (removeVersionSnaps deletion cwd) (init gmajor)
     Just ghcver -> do
       let newestMinor = if isMajorVersion ghcver
                         then (snapsVersion . last) ghcs
                         else ghcver
           gminors = filter ((< newestMinor) . snapsVersion) ghcs
-      mapM_ (removeVersionSnaps dryrun cwd) gminors
+      mapM_ (removeVersionSnaps deletion cwd) gminors
 
-cleanOldStackWork :: Bool -> Int -> IO ()
-cleanOldStackWork dryrun keep = do
+cleanOldStackWork :: Deletion -> Int -> IO ()
+cleanOldStackWork deletion keep = do
   setStackWorkDir
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
   let ghcs = groupOn takeFileName dirs
@@ -135,7 +136,7 @@ cleanOldStackWork dryrun keep = do
     removeOlder dirs = do
       let ghcver = (takeFileName . head) dirs
       oldfiles <- drop keep . reverse <$> sortedByAge
-      mapM_ (Remove.doRemoveDirectory dryrun . takeDirectory) oldfiles
+      mapM_ (Remove.doRemoveDirectory deletion . takeDirectory) oldfiles
       unless (null oldfiles) $
         putStrLn $ show (length oldfiles) ++ " dirs removed for " ++ ghcver
       where
@@ -171,8 +172,8 @@ setStackSnapshotsDir :: IO ()
 setStackSnapshotsDir = do
   getStackSubdir "snapshots" >>= switchToSystemDirUnder
 
-removeStackWorks :: Bool -> Bool -> IO ()
-removeStackWorks dryrun allrecurse = do
+removeStackWorks :: Deletion -> Bool -> IO ()
+removeStackWorks deletion allrecurse = do
   recurse <-
     if allrecurse then return True
     else doesDirectoryExist ".stack-work"
@@ -181,6 +182,6 @@ removeStackWorks dryrun allrecurse = do
     workdirs <- sort . lines <$> cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
     unless (null workdirs) $ do
       mapM_ putStrLn workdirs
-      Remove.prompt dryrun "these dirs"
-      mapM_ (Remove.doRemoveDirectory dryrun) workdirs
+      Remove.prompt deletion "these dirs"
+      mapM_ (Remove.doRemoveDirectory deletion) workdirs
     else error' "run in a project dir (containing .stack-work/)\n or use --all to find and remove all .stack-work/ subdirectories"

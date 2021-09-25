@@ -14,6 +14,7 @@ import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 import GHC
 import Paths_stack_clean_old (version)
 import Snapshots
+import Types
 
 data Mode = Default | Project | Snapshots | Compilers | GHC
 
@@ -28,13 +29,13 @@ main = do
     , Subcommand "list" "List sizes per ghc version" $
       listCmd <$> modeOpt <*> optional ghcVerArg
     , Subcommand "remove" "Remove for a ghc version" $
-      removeCmd <$> dryrun <*> modeOpt <*> ghcVerArg
+      removeCmd <$> deleteOpt <*> modeOpt <*> ghcVerArg
     , Subcommand "keep-minor" "Remove for previous ghc minor versions" $
-      removeMinorsCmd <$> dryrun <*> modeOpt <*> optional ghcVerArg
+      removeMinorsCmd <$> deleteOpt <*> modeOpt <*> optional ghcVerArg
     , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
-      cleanOldStackWork <$> dryrun <*> keepOption
+      cleanOldStackWork <$> deleteOpt <*> keepOption
     , Subcommand "delete-work" "Remove project's .stack-work subdirs recursively" $
-      removeStackWorks <$> dryrun <*> switchWith 'a' "all" "Find all .stack-work/ subdirs, even if current directory not a stack project"
+      removeStackWorks <$> deleteOpt <*> switchWith 'a' "all" "Find all .stack-work/ subdirs, even if current directory not a stack project"
     ]
   where
     modeOpt =
@@ -43,7 +44,7 @@ main = do
       flagWith' Snapshots 's' "snapshots" "Act on ~/.stack/snapshots/" <|>
       flagWith Default Compilers 'c' "compilers" "Act on ~/.stack/programs/"
 
-    dryrun = switchWith 'n' "dry-run" "Show what would be done, without removing"
+    deleteOpt = flagWith Dryrun Delete 'd' "delete" "Without this option dryrun is done"
 
     notHumanOpt = switchWith 'H' "not-human-size" "Do not use du --human-readable"
 
@@ -85,44 +86,44 @@ listCmd mode mver =
         then listCmd Project mver
         else listCmd GHC mver
 
-removeCmd :: Bool -> Mode -> Version -> IO ()
-removeCmd dryrun mode ghcver =
+removeCmd :: Deletion -> Mode -> Version -> IO ()
+removeCmd deletion mode ghcver =
   case mode of
     Project -> do
       cwd <- getCurrentDirectory
       setStackWorkDir
-      cleanGhcSnapshots dryrun cwd ghcver
+      cleanGhcSnapshots deletion cwd ghcver
     Snapshots -> do
       cwd <- getCurrentDirectory
       setStackSnapshotsDir
-      cleanGhcSnapshots dryrun cwd ghcver
-    Compilers -> removeGhcVersionInstallation dryrun ghcver
+      cleanGhcSnapshots deletion cwd ghcver
+    Compilers -> removeGhcVersionInstallation deletion ghcver
     GHC -> do
-      removeCmd dryrun Compilers ghcver
-      removeCmd dryrun Snapshots ghcver
+      removeCmd deletion Compilers ghcver
+      removeCmd deletion Snapshots ghcver
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then removeCmd dryrun Project ghcver
-        else removeCmd dryrun GHC ghcver
+        then removeCmd deletion Project ghcver
+        else removeCmd deletion GHC ghcver
 
-removeMinorsCmd :: Bool -> Mode -> Maybe Version -> IO ()
-removeMinorsCmd dryrun mode mver =
+removeMinorsCmd :: Deletion -> Mode -> Maybe Version -> IO ()
+removeMinorsCmd deletion mode mver =
   case mode of
     Project -> do
       cwd <- getCurrentDirectory
       setStackWorkDir
-      cleanMinorSnapshots dryrun cwd mver
+      cleanMinorSnapshots deletion cwd mver
     Snapshots -> do
       cwd <- getCurrentDirectory
       setStackSnapshotsDir
-      cleanMinorSnapshots dryrun cwd mver
-    Compilers -> removeGhcMinorInstallation dryrun mver
+      cleanMinorSnapshots deletion cwd mver
+    Compilers -> removeGhcMinorInstallation deletion mver
     GHC -> do
-      removeMinorsCmd dryrun Compilers mver
-      removeMinorsCmd dryrun Snapshots mver
+      removeMinorsCmd deletion Compilers mver
+      removeMinorsCmd deletion Snapshots mver
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then removeMinorsCmd dryrun Project mver
-        else removeMinorsCmd dryrun GHC mver
+        then removeMinorsCmd deletion Project mver
+        else removeMinorsCmd deletion GHC mver
