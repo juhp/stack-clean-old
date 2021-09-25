@@ -73,8 +73,8 @@ sizeCmd mode notHuman =
 listCmd :: Mode -> Maybe Version -> IO ()
 listCmd mode mver =
   case mode of
-    Project -> listGhcSnapshots setStackWorkDir mver
-    Snapshots -> listGhcSnapshots setStackSnapshotsDir mver
+    Project -> setStackWorkDir >> listGhcSnapshots mver
+    Snapshots -> setStackSnapshotsDir >> listGhcSnapshots mver
     Compilers -> listGhcInstallation mver
     GHC -> do
       listCmd Compilers mver
@@ -88,8 +88,14 @@ listCmd mode mver =
 removeCmd :: Bool -> Mode -> Version -> IO ()
 removeCmd dryrun mode ghcver =
   case mode of
-    Project -> cleanGhcSnapshots setStackWorkDir dryrun ghcver
-    Snapshots -> cleanGhcSnapshots setStackSnapshotsDir dryrun ghcver
+    Project -> do
+      cwd <- getCurrentDirectory
+      setStackWorkDir
+      cleanGhcSnapshots dryrun cwd ghcver
+    Snapshots -> do
+      cwd <- getCurrentDirectory
+      setStackSnapshotsDir
+      cleanGhcSnapshots dryrun cwd ghcver
     Compilers -> removeGhcVersionInstallation dryrun ghcver
     GHC -> do
       removeCmd dryrun Compilers ghcver
@@ -103,8 +109,14 @@ removeCmd dryrun mode ghcver =
 removeMinorsCmd :: Bool -> Mode -> Maybe Version -> IO ()
 removeMinorsCmd dryrun mode mver =
   case mode of
-    Project -> cleanMinorSnapshots setStackWorkDir dryrun mver
-    Snapshots -> cleanMinorSnapshots setStackSnapshotsDir dryrun mver
+    Project -> do
+      cwd <- getCurrentDirectory
+      setStackWorkDir
+      cleanMinorSnapshots dryrun cwd mver
+    Snapshots -> do
+      cwd <- getCurrentDirectory
+      setStackSnapshotsDir
+      cleanMinorSnapshots dryrun cwd mver
     Compilers -> removeGhcMinorInstallation dryrun mver
     GHC -> do
       removeMinorsCmd dryrun Compilers mver

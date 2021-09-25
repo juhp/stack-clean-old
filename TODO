@@ -5,6 +5,5 @@
 - handle ghc super version
 - count (dirs/installs)
 - types for dirs (Install, Snapshots, Programs)
-- use ~ for $HOME
 - --keep-only X.Y W.Z:
   https://www.reddit.com/r/haskell/comments/knn5yt/stackcleanold_cli_tool_to_recover_diskspace/ghtl9wy/

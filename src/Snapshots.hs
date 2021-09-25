@@ -79,42 +79,50 @@ sizeSnapshots nothuman = do
   snapshots <- getStackSubdir "snapshots"
   cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", snapshots]
 
-listGhcSnapshots :: IO () -> Maybe Version -> IO ()
-listGhcSnapshots setdir mghcver = do
-  setdir
+listGhcSnapshots :: Maybe Version -> IO ()
+listGhcSnapshots mghcver = do
   ghcs <- getSnapshotDirs mghcver
   mapM_ printTotalGhcSize ghcs
 
-removeVersionSnaps :: Bool -> VersionSnapshots -> IO ()
-removeVersionSnaps dryrun versnap = do
+removeVersionSnaps :: Bool -> FilePath -> VersionSnapshots -> IO ()
+removeVersionSnaps dryrun cwd versnap = do
   let dirs = snapsHashes versnap
+  dir <- getCurrentDirectory
+  home <- getHomeDirectory
+  putStrLn $ plural (length dirs) "dir" ++ " in " ++ renderDir home dir ++ " " ++ (if dryrun then "would be " else "") ++ "removed for " ++ showVersion (snapsVersion versnap)
   mapM_ (Remove.doRemoveDirectory dryrun) dirs
-  putStrLn $ show (length dirs) ++ " dirs in ~/.stack/snapshots/ " ++ (if dryrun then "would be " else "") ++ "removed for " ++ showVersion (snapsVersion versnap)
+  where
+    plural :: Int -> String -> String
+    plural n thing = show n ++ " " ++ thing ++ if n == 1 then "" else "s"
 
-cleanGhcSnapshots :: IO () -> Bool -> Version -> IO ()
-cleanGhcSnapshots setDir dryrun ghcver = do
-  setDir
+    renderDir :: FilePath -> FilePath -> FilePath
+    renderDir home fp =
+      case stripPrefix (cwd ++ "/") fp of
+        Just reldir -> reldir
+        Nothing -> "~" </> dropPrefix (home ++ "/") fp
+
+cleanGhcSnapshots :: Bool -> FilePath -> Version -> IO ()
+cleanGhcSnapshots dryrun cwd ghcver = do
   ghcs <- getSnapshotDirs (Just ghcver)
   when (isMajorVersion ghcver) $ do
     Remove.prompt dryrun ("all " ++ showVersion ghcver ++ " builds")
-  mapM_ (removeVersionSnaps dryrun) ghcs
+  mapM_ (removeVersionSnaps dryrun cwd) ghcs
 
-cleanMinorSnapshots :: IO () -> Bool -> Maybe Version -> IO ()
-cleanMinorSnapshots setDir dryrun mghcver = do
-  setDir
+cleanMinorSnapshots :: Bool -> FilePath -> Maybe Version -> IO ()
+cleanMinorSnapshots dryrun cwd mghcver = do
   ghcs <- getSnapshotDirs (majorVersion <$> mghcver)
   case mghcver of
     Nothing -> do
       let majors = groupOn (majorVersion . snapsVersion) ghcs
       forM_ majors $ \ gmajor ->
         when (length gmajor > 1) $
-        mapM_ (removeVersionSnaps dryrun) (init gmajor)
+        mapM_ (removeVersionSnaps dryrun cwd) (init gmajor)
     Just ghcver -> do
       let newestMinor = if isMajorVersion ghcver
                         then (snapsVersion . last) ghcs
                         else ghcver
           gminors = filter ((< newestMinor) . snapsVersion) ghcs
-      mapM_ (removeVersionSnaps dryrun) gminors
+      mapM_ (removeVersionSnaps dryrun cwd) gminors
 
 cleanOldStackWork :: Bool -> Int -> IO ()
 cleanOldStackWork dryrun keep = do
