@@ -1,4 +1,5 @@
-- purge-older --recursive
+- remove snapshots for uninstalled ghc versions
+- follow snapshots by installed ghc versions
 
 - track snapshot dependencies through package .conf files
 - clean up dist/ too

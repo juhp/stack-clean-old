@@ -8,16 +8,17 @@ module Snapshots (
   cleanOldStackWork,
   listGhcSnapshots,
   setStackSnapshotsDir,
-  setStackWorkDir,
+  setStackWorkInstallDir,
   sizeSnapshots,
   sizeStackWork,
-  removeStackWorks
+  removeStackWork
   )
 where
 
 import Control.Monad.Extra
 import Data.List.Extra
 import Data.Version.Extra
+import Numeric.Natural
 import SimpleCmd
 #if MIN_VERSION_simple_cmd(0,2,1)
   hiding (whenM)
@@ -125,9 +126,9 @@ cleanMinorSnapshots deletion cwd mghcver = do
           gminors = filter ((< newestMinor) . snapsVersion) ghcs
       mapM_ (removeVersionSnaps deletion cwd) gminors
 
-cleanOldStackWork :: Deletion -> Int -> IO ()
+cleanOldStackWork :: Deletion -> Natural -> IO ()
 cleanOldStackWork deletion keep = do
-  setStackWorkDir
+  setStackWorkInstallDir
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
   let ghcs = groupOn takeFileName dirs
   mapM_ removeOlder ghcs
@@ -164,24 +165,15 @@ printTotalGhcSize versnaps = do
   total <- head . words . last <$> cmdLines "du" ("-shc":snapsHashes versnaps)
   printf "%4s  %-6s (%d dirs)\n" total ((showVersion . snapsVersion) versnaps) (length (snapsHashes versnaps))
 
-setStackWorkDir :: IO ()
-setStackWorkDir = do
+setStackWorkInstallDir :: IO ()
+setStackWorkInstallDir = do
   switchToSystemDirUnder stackWorkInstall
 
 setStackSnapshotsDir :: IO ()
 setStackSnapshotsDir = do
   getStackSubdir "snapshots" >>= switchToSystemDirUnder
 
-removeStackWorks :: Deletion -> Bool -> IO ()
-removeStackWorks deletion allrecurse = do
-  recurse <-
-    if allrecurse then return True
-    else doesDirectoryExist ".stack-work"
-  if recurse then do
-    -- ignore find errors (e.g. access rights)
-    workdirs <- sort . lines <$> cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
-    unless (null workdirs) $ do
-      mapM_ putStrLn workdirs
-      Remove.prompt deletion "these dirs"
-      mapM_ (Remove.doRemoveDirectory deletion) workdirs
-    else error' "run in a project dir (containing .stack-work/)\n or use --all to find and remove all .stack-work/ subdirectories"
+removeStackWork :: Deletion -> IO ()
+removeStackWork deletion = do
+  Remove.prompt deletion "this dir"
+  Remove.doRemoveDirectory deletion ".stack-work"
