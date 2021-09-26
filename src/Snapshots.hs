@@ -154,9 +154,9 @@ cleanOldStackWork deletion keep = do
 stackWorkInstall :: FilePath
 stackWorkInstall = ".stack-work/install"
 
-sizeStackWork :: Bool -> IO ()
-sizeStackWork nothuman = do
-  let path = stackWorkInstall
+sizeStackWork :: Bool -> FilePath -> IO ()
+sizeStackWork nothuman dir = do
+  let path = dir </> ".stack-work"
   whenM (doesDirectoryExist path) $
     cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", path]
 

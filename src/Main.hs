@@ -7,6 +7,8 @@ import Control.Applicative ((<|>))
 #endif
 import Control.Monad
 import qualified Data.List as L
+import Data.List.Extra
+import Data.Maybe
 import Data.Version.Extra
 import Numeric.Natural
 import SimpleCmd
@@ -71,24 +73,37 @@ withRecursion mrecursion act = do
     Just recursion -> do
       dirs <- if recursion == Recursive
               then map takeDirectory <$> findStackWorks
-              else listDirectory "." >>= filterM (\f -> doesDirectoryExist (f </> ".stack-work")) . L.sort
+              else listStackSubdirs
       forM_ dirs $ \dir ->
         withCurrentDirectory dir $ do
         putStrLn $ "\n" ++ takeFileName dir
         act
     Nothing -> act
 
+withRecursion' :: Maybe Recursion -> (FilePath -> IO ()) -> IO ()
+withRecursion' mrecursion act = do
+  case mrecursion of
+    Just recursion -> do
+      dirs <- if recursion == Recursive
+              then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
+              else listStackSubdirs
+      mapM_ act dirs
+    Nothing -> act ""
+
 sizeCmd :: Mode -> Maybe Recursion -> Bool -> IO ()
 sizeCmd mode mrecursion notHuman =
-  withRecursion mrecursion $
+  withRecursion' mrecursion $ \dir ->
   case mode of
-    Project -> sizeStackWork notHuman
+    Project -> sizeStackWork notHuman dir
     Snapshots -> sizeSnapshots notHuman
     Compilers -> sizeGhcInstalls notHuman
     GHC -> do
-          sizeCmd Compilers Nothing notHuman
-          sizeCmd Snapshots Nothing notHuman
-    Default -> do
+      sizeCmd Compilers Nothing notHuman
+      sizeCmd Snapshots Nothing notHuman
+    Default ->
+      if isJust mrecursion
+      then sizeStackWork notHuman dir
+      else do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
         then sizeCmd Project Nothing notHuman
@@ -170,3 +185,7 @@ findStackWorks =
   -- ignore find errors (e.g. access rights)
   cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
   >>= fmap L.sort . filterM (doesDirectoryExist . (</> "install")) . lines
+
+listStackSubdirs :: IO [FilePath]
+listStackSubdirs =
+  listDirectory "." >>= filterM (\f -> doesDirectoryExist (f </> ".stack-work")) . L.sort
