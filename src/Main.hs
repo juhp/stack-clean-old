@@ -8,6 +8,7 @@ import Control.Applicative ((<|>))
 import Control.Monad
 import qualified Data.List as L
 import Data.Version.Extra
+import Numeric.Natural
 import SimpleCmd
 import SimpleCmdArgs
 import System.Directory
@@ -55,11 +56,7 @@ main = do
 
     ghcVerArg = readVersion <$> strArg "GHCVER"
 
-    keepOption = positive <$> optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version [default 5]" 5
-
-    positive :: Int -> Int
-    positive n = if n > 0 then n else error' "Must be positive integer"
-
+    keepOption = optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version [default 5]" 5
 
 sizeCmd :: Mode -> Bool -> IO ()
 sizeCmd mode notHuman =

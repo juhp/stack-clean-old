@@ -135,7 +135,7 @@ cleanOldStackWork deletion keep = do
     removeOlder :: [FilePath] -> IO ()
     removeOlder dirs = do
       let ghcver = (takeFileName . head) dirs
-      oldfiles <- drop keep . reverse <$> sortedByAge
+      oldfiles <- drop (fromEnum keep) . reverse <$> sortedByAge
       mapM_ (Remove.doRemoveDirectory deletion . takeDirectory) oldfiles
       unless (null oldfiles) $
         putStrLn $ plural (length oldfiles) "dir" ++ " removed for " ++ ghcver
