@@ -5,7 +5,6 @@ module Directories (
   )
 where
 
-import Control.Monad.Extra
 import Data.List.Extra
 import SimpleCmd (error')
 import System.Directory
@@ -23,14 +22,16 @@ getStackSubdir subdir = do
 
 switchToSystemDirUnder :: FilePath -> IO ()
 switchToSystemDirUnder dir = do
-  ifM (doesDirectoryExist dir)
-    (setCurrentDirectory dir)
-    (error' $ dir ++ " not found")
+  exists <- doesDirectoryExist dir
+  if exists
+    then setCurrentDirectory dir
+    else error' $ dir ++ " not found"
   systems <- listDirectory "."
   -- FIXME be more precise/check "system" dirs
   -- eg 64bit intel Linux: x86_64-linux-tinfo6
-  let system = case systems of
-        [] -> error' $ "No OS system in " ++ dir
-        [sys] -> sys
-        _ -> error' "More than one OS systems found " ++ dir ++ " (unsupported)"
+  let system =
+        case systems of
+          [] -> error' $ "No OS system in " ++ dir
+          [sys] -> sys
+          _ -> error' "More than one OS systems found " ++ dir ++ " (unsupported)"
   setCurrentDirectory system
