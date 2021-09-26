@@ -1,5 +1,12 @@
 # Release history for stack-clean-old-work
 
+## 0.4 (2021-09-26)
+- dryrun is now default: use --delete for actual removal
+  (suggested by @andreasabel #6)
+- new --subdirs and --recursive options
+- various output improvements
+- purge-older now also says "would be removed" when dryrun
+
 ## 0.3.1 (2021-08-01)
 - 'delete-work': use find -prune and ignore inaccessible files (@petrem, #4)
 
