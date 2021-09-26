@@ -86,15 +86,15 @@ listGhcSnapshots mghcver = do
   ghcs <- getSnapshotDirs mghcver
   mapM_ printTotalGhcSize ghcs
 
-plural :: Int -> String -> String
-plural n thing = show n ++ " " ++ thing ++ if n == 1 then "" else "s"
+plural :: String -> Int -> String
+plural thing n = show n ++ " " ++ thing ++ if n == 1 then "" else "s"
 
 removeVersionSnaps :: Deletion -> FilePath -> VersionSnapshots -> IO ()
 removeVersionSnaps deletion cwd versnap = do
   let dirs = snapsHashes versnap
   dir <- getCurrentDirectory
   home <- getHomeDirectory
-  putStrLn $ plural (length dirs) "dir" ++ " in " ++ renderDir home dir ++ " " ++ (if isDelete deletion then "" else "would be ") ++ "removed for " ++ showVersion (snapsVersion versnap)
+  putStrLn $ plural "dir" (length dirs) ++ " in " ++ renderDir home dir ++ " " ++ (if isDelete deletion then "" else "would be ") ++ "removed for " ++ showVersion (snapsVersion versnap)
   mapM_ (Remove.doRemoveDirectory deletion) dirs
   where
     renderDir :: FilePath -> FilePath -> FilePath
@@ -139,7 +139,7 @@ cleanOldStackWork deletion keep = do
       oldfiles <- drop (fromEnum keep) . reverse <$> sortedByAge
       mapM_ (Remove.doRemoveDirectory deletion . takeDirectory) oldfiles
       unless (null oldfiles) $
-        putStrLn $ plural (length oldfiles) "dir" ++ " removed for " ++ ghcver
+        putStrLn $ plural "dir" (length oldfiles) ++ (if isDelete deletion then "" else " would be") ++ " removed for " ++ ghcver
       where
         sortedByAge = do
           fileTimes <- mapM newestTimeStamp dirs
