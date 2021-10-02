@@ -5,7 +5,7 @@ snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
 ```
-stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-p|--project) | (-g|--ghc)] [GHCVER]
+stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-p|--project) | (-g|--ghc)] [--delete] [GHCVER]
 ```
 Options:
 
@@ -26,7 +26,7 @@ and the subcommands:
     removes for the specified ghc version (the GHCVER argument is required).
 
 `keep-minor`:
-    removes the builds/installs for previous minor ghc versions.
+    removes the builds/installs for older minor releases of ghc major versions.
     If GHCVER is given then only minor versions older than it are removed.
 
 `purge-older` and `delete-work`:
@@ -36,8 +36,9 @@ If you remove any needed snapshot builds for a version of ghc,
 then you would have to rebuild them again for any projects still using them,
 so removal should be used cautiously, but it can recover a lot of diskspace.
 
-NBB: All the command support `--dry-run` (`-n`), so please use it to
-check the effect of running them safely beforehand.
+Since version 0.4 dry-run mode is now the default and one needs to use
+`--delete` (`-d`) for actual deletion of files,
+after checking the dry-run output first.
 
 ### Example usage
 To remove project builds for ghc-8.2.2:
@@ -46,7 +47,7 @@ $ stack-clean-old list
 154M  8.2.2  (5 dirs)
 154M  8.4.4  (5 dirs)
 163M  8.6.5  (5 dirs)
-$ stack-clean-old remove -p 8.2.2
+$ stack-clean-old remove --delete -p 8.2.2
 ```
 
 Remove stack ghc-8.4 snapshot builds and compilers before 8.4.4:
@@ -56,7 +57,7 @@ $ stack-clean-old list -g 8.4
 368M  8.4.2  (6 dirs)
 489M  8.4.3  (8 dirs)
 799M  8.4.4  (24 dirs)
-$ stack-clean-old keep-minor -g 8.4.4
+$ stack-clean-old keep-minor -d -g 8.4.4
 ghc-tinfo6-8.4.3 removed
 7 dirs removed for 8.4.1
 6 dirs removed for 8.4.2
@@ -82,7 +83,7 @@ _all_ `.stack-work/` dirs from a project to save space
 (seems same as `stack clean --full`).
 
 `stack-clean-old delete-work --all` works from outside stack projects:
-please test with `--dry-run` first.
+please use with care.
 
 ## Installation
 
@@ -92,12 +93,16 @@ Run `stack install` or `cabal install`
 This tool complements [stack-all](https://hackage.haskell.org/package/stack-all)
 which builds projects over LTS major versions and hence generates lot of stack builds.
 
+[cabal-clean](https://hackage.haskell.org/package/cabal-clean) is
+a similar tool for cleaning old cached cabal build files.
+
 ## Contributing
 BSD license
 
 Project: https://github.com/juhp/stack-clean-old
 
 ## Warning disclaimer
-Use at your own risk: the author takes no responsibility for any loss or damaged caused by using this tool, as also mentioned in LICENSE.
+Use at your own risk: the author takes no responsibility for any loss or
+damaged caused by using this tool.
 
 Bug reports, suggestions, and improvements are welcome.
