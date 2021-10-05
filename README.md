@@ -4,9 +4,9 @@ A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
 snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
-```
-stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-p|--project) | (-g|--ghc)] [--delete] [GHCVER]
-```
+`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [-d|--delete] [(-p|--project) | (-g|--ghc)] [GHCVER]
+`
+
 Options:
 
 - `--project` (default in a stack project dir): act on `.stack-work/install/`
@@ -83,7 +83,7 @@ _all_ `.stack-work/` dirs from a project to save space
 (seems same as `stack clean --full`).
 
 `stack-clean-old delete-work --all` works from outside stack projects:
-please use with care.
+please use with care with `--delete`.
 
 ## Installation
 
@@ -101,7 +101,7 @@ BSD license
 
 Project: https://github.com/juhp/stack-clean-old
 
-## Warning disclaimer
+## Disclaimer
 Use at your own risk: the author takes no responsibility for any loss or
 damaged caused by using this tool.
 

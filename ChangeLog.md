@@ -1,5 +1,8 @@
 # Release history for stack-clean-old-work
 
+## 0.4.1 (2021-10-05)
+- --help now mentions --delete and a link to README
+
 ## 0.4 (2021-09-26)
 - dryrun is now default: use --delete for actual removal
   (suggested by @andreasabel #6)
