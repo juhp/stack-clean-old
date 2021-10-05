@@ -42,16 +42,17 @@ after checking the dry-run output first.
 
 ### Example usage
 To remove project builds for ghc-8.2.2:
-```
+```ShellSession
 $ stack-clean-old list
 154M  8.2.2  (5 dirs)
 154M  8.4.4  (5 dirs)
 163M  8.6.5  (5 dirs)
 $ stack-clean-old remove --delete -p 8.2.2
+:
 ```
 
 Remove stack ghc-8.4 snapshot builds and compilers before 8.4.4:
-```
+```ShellSession
 $ stack-clean-old list -g 8.4
 421M  8.4.1  (7 dirs)
 368M  8.4.2  (6 dirs)
@@ -84,6 +85,32 @@ _all_ `.stack-work/` dirs from a project to save space
 
 `stack-clean-old delete-work --all` works from outside stack projects:
 please use with care with `--delete`.
+
+### Help output
+(Note you can also run this tool via `stack clean-old`.)
+
+To get help you can run `stack-clean-old --help` or just:
+```ShellSession
+$ stack-clean-old
+Stack clean up tool
+
+Usage: stack-clean-old [--version] COMMAND
+  Cleans away old stack-work builds (and pending: stack snapshots) to recover
+  diskspace. Use the --delete option to perform actual removals.
+  https://github.com/juhp/stack-clean-old#readme
+
+Available options:
+  -h,--help                Show this help text
+  --version                Show version
+
+Available commands:
+  size                     Total size
+  list                     List sizes per ghc version
+  remove                   Remove for a ghc version
+  keep-minor               Remove for previous ghc minor versions
+  purge-older              Purge older builds in .stack-work/install
+  delete-work              Remove project's .stack-work subdirs recursively
+```
 
 ## Installation
 
