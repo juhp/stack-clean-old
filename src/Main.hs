@@ -31,7 +31,7 @@ main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
   simpleCmdArgs (Just version) "Stack clean up tool"
-    "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace." $
+    "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace. Use the --delete option to perform actual removals. https://github.com/juhp/stack-clean-old#readme" $
     subcommands
     [ Subcommand "size" "Total size" $
       sizeCmd <$> modeOpt <*> recursionOpt <*> notHumanOpt
