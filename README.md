@@ -79,7 +79,7 @@ The preservation/deletion is calculated and done per ghc version.
 NB: If you regularly build your project for several branches/tags against the same LTS or ghc version then it is safer to avoid using `purge-older`.
 
 ### Deleting all `.stack-work/` subdirectories
-`stack-clean-old delete-work` can be used to recursively remove
+`stack-clean-old delete-work --recursive` can be used to remove recursively
 _all_ `.stack-work/` dirs from a project to save space
 (seems same as `stack clean --full`).
 

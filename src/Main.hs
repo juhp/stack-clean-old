@@ -43,7 +43,7 @@ main = do
       removeMinorsCmd <$> deleteOpt <*> modeOpt <*> recursionOpt <*> optional ghcVerArg
     , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
       purgeOlderCmd <$> deleteOpt <*> keepOption <*> recursionOpt
-    , Subcommand "delete-work" "Remove project's .stack-work subdirs recursively" $
+    , Subcommand "delete-work" "Remove project's .stack-work/ (optionally recursively)" $
       deleteWorkCmd <$> deleteOpt <*> recursionOpt
     ]
   where
