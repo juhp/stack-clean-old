@@ -39,6 +39,7 @@ switchToSystemDirUnder msystem dir = do
             case systems of
               [] -> error' $ "No OS system in " ++ dir
               [sys] -> sys
-              _ -> error' "More than one OS systems found in " ++ dir ++
-                   ": please specify with --os-system"
+              ss -> error' $ intercalate "\n" $
+                    ["Please specify platform with --os-system (-o).",
+                      dir ++ " has:"] ++ ss
   setCurrentDirectory system
