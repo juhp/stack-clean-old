@@ -41,19 +41,23 @@ Since version 0.4 dry-run mode is now the default and one needs to use
 after checking the dry-run output first.
 
 ### Example usage
-To remove project builds for ghc-8.2.2:
+List a project's builds:
 ```ShellSession
 $ stack-clean-old list
 154M  8.2.2  (5 dirs)
 154M  8.4.4  (5 dirs)
 163M  8.6.5  (5 dirs)
-$ stack-clean-old remove --delete -p 8.2.2
+```
+Remove project's 8.2.2 builds:
+```ShellSession
+$ stack-clean-old remove --delete --project 8.2.2
 :
 ```
+(--project is optional in a project dir).
 
 Remove stack ghc-8.4 snapshot builds and compilers before 8.4.4:
 ```ShellSession
-$ stack-clean-old list -g 8.4
+$ stack-clean-old list --global 8.4
 421M  8.4.1  (7 dirs)
 368M  8.4.2  (6 dirs)
 489M  8.4.3  (8 dirs)
@@ -64,8 +68,7 @@ ghc-tinfo6-8.4.3 removed
 6 dirs removed for 8.4.2
 8 dirs removed for 8.4.3
 ```
-
-Incidently I build my projects across as many major Stackage LTS versions as possible (using my stack-all tool), and collectively this piles up to a lot of diskspace: so I wrote this tool to help manage that.
+(--global is optional outside a project dir).
 
 ### Purging older stack project builds
 ```
@@ -91,8 +94,7 @@ please use with care with `--delete`.
 
 To get help you can run `stack-clean-old --help` or just:
 ```ShellSession
-$ stack-clean-old
-Stack clean up tool
+$ Stack clean up tool
 
 Usage: stack-clean-old [--version] COMMAND
   Cleans away old stack-work builds (and pending: stack snapshots) to recover
@@ -109,7 +111,8 @@ Available commands:
   remove                   Remove for a ghc version
   keep-minor               Remove for previous ghc minor versions
   purge-older              Purge older builds in .stack-work/install
-  delete-work              Remove project's .stack-work subdirs recursively
+  delete-work              Remove project's .stack-work/ (optionally
+                           recursively)
 ```
 
 ## Installation
@@ -118,7 +121,8 @@ Run `stack install` or `cabal install`
 
 ## Related
 This tool complements [stack-all](https://hackage.haskell.org/package/stack-all)
-which builds projects over LTS major versions and hence generates lot of stack builds.
+which builds projects across LTS major versions and
+hence generates a lot of stack builds.
 
 [cabal-clean](https://hackage.haskell.org/package/cabal-clean) is
 a similar tool for cleaning old cached cabal build files.
