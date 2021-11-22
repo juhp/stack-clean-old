@@ -1,5 +1,8 @@
 # Release history for stack-clean-old-work
 
+## 0.4.2 (2021-11-22)
+- add optional --os-system (#7)
+
 ## 0.4.1 (2021-10-05)
 - --help now mentions --delete and a link to README
 
