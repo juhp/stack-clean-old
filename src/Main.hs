@@ -34,17 +34,36 @@ main = do
     "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace. Use the --delete option to perform actual removals. https://github.com/juhp/stack-clean-old#readme" $
     subcommands
     [ Subcommand "size" "Total size" $
-      sizeCmd <$> modeOpt <*> recursionOpt <*> notHumanOpt
+      sizeCmd
+      <$> modeOpt
+      <*> recursionOpt
+      <*> notHumanOpt
     , Subcommand "list" "List sizes per ghc version" $
-      listCmd <$> modeOpt <*> recursionOpt <*> optional ghcVerArg
+      listCmd
+      <$> modeOpt
+      <*> recursionOpt
+      <*> optional ghcVerArg
     , Subcommand "remove" "Remove for a ghc version" $
-      removeCmd <$> deleteOpt <*> modeOpt <*> recursionOpt <*> ghcVerArg
+      removeCmd
+      <$> deleteOpt
+      <*> modeOpt
+      <*> recursionOpt
+      <*> ghcVerArg
     , Subcommand "keep-minor" "Remove for previous ghc minor versions" $
-      removeMinorsCmd <$> deleteOpt <*> modeOpt <*> recursionOpt <*> optional ghcVerArg
+      removeMinorsCmd
+      <$> deleteOpt
+      <*> modeOpt
+      <*> recursionOpt
+      <*> optional ghcVerArg
     , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
-      purgeOlderCmd <$> deleteOpt <*> keepOption <*> recursionOpt
+      purgeOlderCmd
+      <$> deleteOpt
+      <*> keepOption
+      <*> recursionOpt
     , Subcommand "delete-work" "Remove project's .stack-work/ (optionally recursively)" $
-      deleteWorkCmd <$> deleteOpt <*> recursionOpt
+      deleteWorkCmd
+      <$> deleteOpt
+      <*> recursionOpt
     ]
   where
     modeOpt =
