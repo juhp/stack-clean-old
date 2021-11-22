@@ -43,23 +43,27 @@ main = do
       <$> modeOpt
       <*> recursionOpt
       <*> optional ghcVerArg
+      <*> optional systemOpt
     , Subcommand "remove" "Remove for a ghc version" $
       removeCmd
       <$> deleteOpt
       <*> modeOpt
       <*> recursionOpt
       <*> ghcVerArg
+      <*> optional systemOpt
     , Subcommand "keep-minor" "Remove for previous ghc minor versions" $
       removeMinorsCmd
       <$> deleteOpt
       <*> modeOpt
       <*> recursionOpt
       <*> optional ghcVerArg
+      <*> optional systemOpt
     , Subcommand "purge-older" "Purge older builds in .stack-work/install" $
       purgeOlderCmd
       <$> deleteOpt
       <*> keepOption
       <*> recursionOpt
+      <*> optional systemOpt
     , Subcommand "delete-work" "Remove project's .stack-work/ (optionally recursively)" $
       deleteWorkCmd
       <$> deleteOpt
@@ -85,6 +89,8 @@ main = do
 
     keepOption = optionalWith auto 'k' "keep" "INT" "number of project builds per ghc version [default 5]" 5
 
+    systemOpt = strOptionWith 'o' "os-system" "SYSTEM"
+                "Specify which of the OS platforms to work on (eg 'x86_64-linux-tinfo6' or 'aarch64-linux-nix', etc)"
 
 withRecursion :: Maybe Recursion -> IO () -> IO ()
 withRecursion mrecursion act = do
@@ -128,71 +134,72 @@ sizeCmd mode mrecursion notHuman =
         then sizeCmd Project Nothing notHuman
         else sizeCmd GHC Nothing notHuman
 
-listCmd :: Mode -> Maybe Recursion -> Maybe Version -> IO ()
-listCmd mode mrecursion mver =
+listCmd :: Mode -> Maybe Recursion -> Maybe Version -> Maybe String -> IO ()
+listCmd mode mrecursion mver msystem =
   withRecursion mrecursion $
   case mode of
-    Project -> setStackWorkInstallDir >> listGhcSnapshots mver
-    Snapshots -> setStackSnapshotsDir >> listGhcSnapshots mver
-    Compilers -> listGhcInstallation mver
+    Project -> setStackWorkInstallDir msystem >> listGhcSnapshots mver
+    Snapshots -> setStackSnapshotsDir msystem >> listGhcSnapshots mver
+    Compilers -> listGhcInstallation mver msystem
     GHC -> do
-      listCmd Compilers Nothing mver
-      listCmd Snapshots Nothing mver
+      listCmd Compilers Nothing mver msystem
+      listCmd Snapshots Nothing mver msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then listCmd Project Nothing mver
-        else listCmd GHC Nothing mver
+        then listCmd Project Nothing mver msystem
+        else listCmd GHC Nothing mver msystem
 
-removeCmd :: Deletion -> Mode -> Maybe Recursion -> Version -> IO ()
-removeCmd deletion mode mrecursion ghcver =
+removeCmd :: Deletion -> Mode -> Maybe Recursion -> Version -> Maybe String
+          -> IO ()
+removeCmd deletion mode mrecursion ghcver msystem =
   withRecursion mrecursion $
   case mode of
     Project -> do
       cwd <- getCurrentDirectory
-      setStackWorkInstallDir
+      setStackWorkInstallDir msystem
       cleanGhcSnapshots deletion cwd ghcver
     Snapshots -> do
       cwd <- getCurrentDirectory
-      setStackSnapshotsDir
+      setStackSnapshotsDir msystem
       cleanGhcSnapshots deletion cwd ghcver
-    Compilers -> removeGhcVersionInstallation deletion ghcver
+    Compilers -> removeGhcVersionInstallation deletion ghcver msystem
     GHC -> do
-      removeCmd deletion Compilers Nothing ghcver
-      removeCmd deletion Snapshots Nothing ghcver
+      removeCmd deletion Compilers Nothing ghcver msystem
+      removeCmd deletion Snapshots Nothing ghcver msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then removeCmd deletion Project Nothing ghcver
-        else removeCmd deletion GHC Nothing ghcver
+        then removeCmd deletion Project Nothing ghcver msystem
+        else removeCmd deletion GHC Nothing ghcver msystem
 
 removeMinorsCmd :: Deletion -> Mode -> Maybe Recursion -> Maybe Version
-                -> IO ()
-removeMinorsCmd deletion mode mrecursion mver =
+                -> Maybe String -> IO ()
+removeMinorsCmd deletion mode mrecursion mver msystem =
   withRecursion mrecursion $
   case mode of
     Project -> do
       cwd <- getCurrentDirectory
-      setStackWorkInstallDir
+      setStackWorkInstallDir msystem
       cleanMinorSnapshots deletion cwd mver
     Snapshots -> do
       cwd <- getCurrentDirectory
-      setStackSnapshotsDir
+      setStackSnapshotsDir msystem
       cleanMinorSnapshots deletion cwd mver
-    Compilers -> removeGhcMinorInstallation deletion mver
+    Compilers -> removeGhcMinorInstallation deletion mver msystem
     GHC -> do
-      removeMinorsCmd deletion Compilers Nothing mver
-      removeMinorsCmd deletion Snapshots Nothing mver
+      removeMinorsCmd deletion Compilers Nothing mver msystem
+      removeMinorsCmd deletion Snapshots Nothing mver msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
-        then removeMinorsCmd deletion Project Nothing mver
-        else removeMinorsCmd deletion GHC Nothing mver
+        then removeMinorsCmd deletion Project Nothing mver msystem
+        else removeMinorsCmd deletion GHC Nothing mver msystem
 
-purgeOlderCmd :: Deletion -> Natural -> Maybe Recursion -> IO ()
-purgeOlderCmd deletion keep mrecursion =
+purgeOlderCmd :: Deletion -> Natural -> Maybe Recursion -> Maybe String -> IO ()
+purgeOlderCmd deletion keep mrecursion msystem =
   withRecursion mrecursion $
-  cleanOldStackWork deletion keep
+  cleanOldStackWork deletion keep msystem
 
 deleteWorkCmd :: Deletion -> Maybe Recursion -> IO ()
 deleteWorkCmd deletion mrecursion =

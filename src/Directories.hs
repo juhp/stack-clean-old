@@ -20,8 +20,8 @@ getStackSubdir subdir = do
   home <- getHomeDirectory
   return $ home </> ".stack" </> subdir
 
-switchToSystemDirUnder :: FilePath -> IO ()
-switchToSystemDirUnder dir = do
+switchToSystemDirUnder :: Maybe String -> FilePath -> IO ()
+switchToSystemDirUnder msystem dir = do
   exists <- doesDirectoryExist dir
   if exists
     then setCurrentDirectory dir
@@ -30,8 +30,15 @@ switchToSystemDirUnder dir = do
   -- FIXME be more precise/check "system" dirs
   -- eg 64bit intel Linux: x86_64-linux-tinfo6
   let system =
-        case systems of
-          [] -> error' $ "No OS system in " ++ dir
-          [sys] -> sys
-          _ -> error' "More than one OS systems found " ++ dir ++ " (unsupported)"
+        case msystem of
+          Just sys ->
+            if sys `elem` systems
+            then sys
+            else error' $ sys ++ " not found"
+          Nothing ->
+            case systems of
+              [] -> error' $ "No OS system in " ++ dir
+              [sys] -> sys
+              _ -> error' "More than one OS systems found in " ++ dir ++
+                   ": please specify with --os-system"
   setCurrentDirectory system

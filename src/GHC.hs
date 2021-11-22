@@ -26,13 +26,13 @@ sizeGhcInstalls nothuman = do
   programs <- getStackProgramsDir
   cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", programs]
 
-setStackProgramsDir :: IO ()
-setStackProgramsDir =
-  getStackProgramsDir >>= switchToSystemDirUnder
+setStackProgramsDir :: Maybe String -> IO ()
+setStackProgramsDir msystem =
+  getStackProgramsDir >>= switchToSystemDirUnder msystem
 
-getGhcInstallDirs :: Maybe Version -> IO [FilePath]
-getGhcInstallDirs mghcver = do
-  setStackProgramsDir
+getGhcInstallDirs :: Maybe Version -> Maybe String -> IO [FilePath]
+getGhcInstallDirs mghcver msystem = do
+  setStackProgramsDir msystem
   sortOn ghcInstallVersion <$> globDirs matchVersion
   where
     matchVersion =
@@ -45,16 +45,16 @@ ghcInstallVersion :: FilePath -> Version
 ghcInstallVersion =
   readVersion . takeWhileEnd (/= '-') .  dropSuffix ".temp"
 
-listGhcInstallation :: Maybe Version -> IO ()
-listGhcInstallation mghcver = do
-  dirs <- getGhcInstallDirs mghcver
+listGhcInstallation :: Maybe Version -> Maybe String -> IO ()
+listGhcInstallation mghcver msystem = do
+  dirs <- getGhcInstallDirs mghcver msystem
   mapM_ putStrLn $ case mghcver of
     Nothing -> dirs
     Just ghcver -> filter ((== ghcver) . (if isMajorVersion ghcver then majorVersion else id) . ghcInstallVersion) dirs
 
-removeGhcVersionInstallation :: Deletion -> Version -> IO ()
-removeGhcVersionInstallation deletion ghcver = do
-  installs <- getGhcInstallDirs (Just ghcver)
+removeGhcVersionInstallation :: Deletion -> Version -> Maybe String -> IO ()
+removeGhcVersionInstallation deletion ghcver msystem = do
+  installs <- getGhcInstallDirs (Just ghcver) msystem
   case installs of
     [] -> putStrLn $ "stack ghc compiler version " ++ showVersion ghcver ++ " not found"
     [g] | not (isMajorVersion ghcver) -> doRemoveGhcVersion deletion g
@@ -63,9 +63,10 @@ removeGhcVersionInstallation deletion ghcver = do
       mapM_ (doRemoveGhcVersion deletion) gs
       else error' "more than one match found!!"
 
-removeGhcMinorInstallation :: Deletion -> Maybe Version -> IO ()
-removeGhcMinorInstallation deletion mghcver = do
-  dirs <- getGhcInstallDirs (majorVersion <$> mghcver)
+removeGhcMinorInstallation :: Deletion -> Maybe Version -> Maybe String
+                           -> IO ()
+removeGhcMinorInstallation deletion mghcver msystem = do
+  dirs <- getGhcInstallDirs (majorVersion <$> mghcver) msystem
   case mghcver of
     Nothing -> do
       let majors = groupOn (majorVersion . ghcInstallVersion) dirs

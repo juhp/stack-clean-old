@@ -126,9 +126,9 @@ cleanMinorSnapshots deletion cwd mghcver = do
           gminors = filter ((< newestMinor) . snapsVersion) ghcs
       mapM_ (removeVersionSnaps deletion cwd) gminors
 
-cleanOldStackWork :: Deletion -> Natural -> IO ()
-cleanOldStackWork deletion keep = do
-  setStackWorkInstallDir
+cleanOldStackWork :: Deletion -> Natural -> Maybe String -> IO ()
+cleanOldStackWork deletion keep msystem = do
+  setStackWorkInstallDir msystem
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
   let ghcs = groupOn takeFileName dirs
   mapM_ removeOlder ghcs
@@ -165,13 +165,13 @@ printTotalGhcSize versnaps = do
   total <- head . words . last <$> cmdLines "du" ("-shc":snapsHashes versnaps)
   printf "%4s  %-6s (%d dirs)\n" total ((showVersion . snapsVersion) versnaps) (length (snapsHashes versnaps))
 
-setStackWorkInstallDir :: IO ()
-setStackWorkInstallDir = do
-  switchToSystemDirUnder stackWorkInstall
+setStackWorkInstallDir :: Maybe String -> IO ()
+setStackWorkInstallDir msystem = do
+  switchToSystemDirUnder msystem stackWorkInstall
 
-setStackSnapshotsDir :: IO ()
-setStackSnapshotsDir = do
-  getStackSubdir "snapshots" >>= switchToSystemDirUnder
+setStackSnapshotsDir :: Maybe String -> IO ()
+setStackSnapshotsDir msystem = do
+  getStackSubdir "snapshots" >>= switchToSystemDirUnder msystem
 
 removeStackWork :: Deletion -> IO ()
 removeStackWork deletion = do
