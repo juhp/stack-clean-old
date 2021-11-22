@@ -125,8 +125,8 @@ sizeCmd mode mrecursion notHuman =
     Snapshots -> sizeSnapshots notHuman
     Compilers -> sizeGhcInstalls notHuman
     GHC -> do
-      sizeCmd Compilers Nothing notHuman
       sizeCmd Snapshots Nothing notHuman
+      sizeCmd Compilers Nothing notHuman
     Default ->
       if isJust mrecursion
       then sizeStackWork notHuman dir
@@ -144,8 +144,8 @@ listCmd mode mrecursion mver msystem =
     Snapshots -> setStackSnapshotsDir msystem >> listGhcSnapshots mver
     Compilers -> listGhcInstallation mver msystem
     GHC -> do
-      listCmd Compilers Nothing mver msystem
       listCmd Snapshots Nothing mver msystem
+      listCmd Compilers Nothing mver msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
