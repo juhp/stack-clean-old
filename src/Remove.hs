@@ -23,6 +23,9 @@ removeFile deletion file =
 
 prompt :: Deletion -> String -> IO ()
 prompt deletion str =
-  when (isDelete deletion) $ do
-  putStr $ "Press Enter to delete " ++ str ++ ": "
-  void getLine
+  if isDelete deletion
+  then do
+    putStr $ "Press Enter to delete " ++ str ++ ": "
+    void getLine
+  else
+    putStrLn $ str ++ " would be deleted"
