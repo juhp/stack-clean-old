@@ -103,7 +103,7 @@ withRecursion mrecursion act = do
               else listStackSubdirs
       forM_ dirs $ \dir ->
         withCurrentDirectory dir $ do
-        putStrLn $ "\n" ++ takeFileName dir
+        putStrLn $ "\n" ++ takeFileName dir ++ "/"
         act
     Nothing -> act
 
