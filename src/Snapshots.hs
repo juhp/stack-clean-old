@@ -175,5 +175,5 @@ setStackSnapshotsDir msystem = do
 
 removeStackWork :: Deletion -> IO ()
 removeStackWork deletion = do
-  Remove.prompt deletion "this dir"
+  Remove.prompt deletion ".stack-work"
   Remove.doRemoveDirectory deletion ".stack-work"
