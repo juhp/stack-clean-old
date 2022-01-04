@@ -156,59 +156,63 @@ listCmd mode mrecursion mver msystem =
 
 removeCmd :: Deletion -> Mode -> Maybe Recursion -> Version -> Maybe String
           -> IO ()
-removeCmd deletion mode mrecursion ghcver msystem =
+removeCmd deletion mode mrecursion ghcver msystem = do
   withRecursion True mrecursion $
-  case mode of
-    Project -> do
-      cwd <- getCurrentDirectory
-      setStackWorkInstallDir msystem
-      cleanGhcSnapshots deletion cwd ghcver
-    Snapshots -> do
-      cwd <- getCurrentDirectory
-      setStackSnapshotsDir msystem
-      cleanGhcSnapshots deletion cwd ghcver
-    Compilers -> removeGhcVersionInstallation deletion ghcver msystem
-    GHC -> do
-      removeCmd deletion Compilers Nothing ghcver msystem
-      removeCmd deletion Snapshots Nothing ghcver msystem
-    Default -> do
-      isProject <- doesDirectoryExist ".stack-work"
-      if isProject
-        then removeCmd deletion Project Nothing ghcver msystem
-        else removeCmd deletion GHC Nothing ghcver msystem
+    case mode of
+      Project -> do
+        cwd <- getCurrentDirectory
+        setStackWorkInstallDir msystem
+        cleanGhcSnapshots deletion cwd ghcver
+      Snapshots -> do
+        cwd <- getCurrentDirectory
+        setStackSnapshotsDir msystem
+        cleanGhcSnapshots deletion cwd ghcver
+      Compilers -> removeGhcVersionInstallation deletion ghcver msystem
+      GHC -> do
+        removeCmd deletion Compilers Nothing ghcver msystem
+        removeCmd deletion Snapshots Nothing ghcver msystem
+      Default -> do
+        isProject <- doesDirectoryExist ".stack-work"
+        if isProject
+          then removeCmd deletion Project Nothing ghcver msystem
+          else removeCmd deletion GHC Nothing ghcver msystem
+  remindDelete
 
 removeMinorsCmd :: Deletion -> Mode -> Maybe Recursion -> Maybe Version
                 -> Maybe String -> IO ()
-removeMinorsCmd deletion mode mrecursion mver msystem =
+removeMinorsCmd deletion mode mrecursion mver msystem = do
   withRecursion True mrecursion $
-  case mode of
-    Project -> do
-      cwd <- getCurrentDirectory
-      setStackWorkInstallDir msystem
-      cleanMinorSnapshots deletion cwd mver
-    Snapshots -> do
-      cwd <- getCurrentDirectory
-      setStackSnapshotsDir msystem
-      cleanMinorSnapshots deletion cwd mver
-    Compilers -> removeGhcMinorInstallation deletion mver msystem
-    GHC -> do
-      removeMinorsCmd deletion Compilers Nothing mver msystem
-      removeMinorsCmd deletion Snapshots Nothing mver msystem
-    Default -> do
-      isProject <- doesDirectoryExist ".stack-work"
-      if isProject
-        then removeMinorsCmd deletion Project Nothing mver msystem
-        else removeMinorsCmd deletion GHC Nothing mver msystem
+    case mode of
+      Project -> do
+        cwd <- getCurrentDirectory
+        setStackWorkInstallDir msystem
+        cleanMinorSnapshots deletion cwd mver
+      Snapshots -> do
+        cwd <- getCurrentDirectory
+        setStackSnapshotsDir msystem
+        cleanMinorSnapshots deletion cwd mver
+      Compilers -> removeGhcMinorInstallation deletion mver msystem
+      GHC -> do
+        removeMinorsCmd deletion Compilers Nothing mver msystem
+        removeMinorsCmd deletion Snapshots Nothing mver msystem
+      Default -> do
+        isProject <- doesDirectoryExist ".stack-work"
+        if isProject
+          then removeMinorsCmd deletion Project Nothing mver msystem
+          else removeMinorsCmd deletion GHC Nothing mver msystem
+  remindDelete
 
 purgeOlderCmd :: Deletion -> Natural -> Maybe Recursion -> Maybe String -> IO ()
-purgeOlderCmd deletion keep mrecursion msystem =
+purgeOlderCmd deletion keep mrecursion msystem = do
   withRecursion True mrecursion $
-  cleanOldStackWork deletion keep msystem
+    cleanOldStackWork deletion keep msystem
+  remindDelete
 
 deleteWorkCmd :: Deletion -> Maybe Recursion -> IO ()
-deleteWorkCmd deletion mrecursion =
+deleteWorkCmd deletion mrecursion = do
   withRecursion False mrecursion $
-  removeStackWork deletion
+    removeStackWork deletion
+  remindDelete
 
 findStackWorks :: IO [FilePath]
 findStackWorks =
@@ -218,3 +222,7 @@ findStackWorks =
 listStackSubdirs :: IO [FilePath]
 listStackSubdirs =
   listDirectory "." >>= filterM (\f -> doesDirectoryExist (f </> ".stack-work")) . L.sort
+
+remindDelete :: Deletion -> IO ()
+remindDelete deletion =
+  unless (isDelete deletion) $ putStrLn "\nUse --delete for removal"
