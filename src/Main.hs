@@ -101,7 +101,9 @@ withRecursion needinstall mrecursion act = do
       dirs <- (if recursion == Recursive
                then map takeDirectory <$> findStackWorks
                else listStackSubdirs)
-              >>= if needinstall then (filterM (doesDirectoryExist . (</> "install"))) else return
+              >>= if needinstall
+                  then filterM (doesDirectoryExist . (</> "install"))
+                  else return
       forM_ dirs $ \dir ->
         withCurrentDirectory dir $ do
         putStrLn $ "\n" ++ takeFileName dir ++ "/"
@@ -116,7 +118,7 @@ withRecursion' mrecursion act = do
                then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
                else listStackSubdirs)
               >>= filterM (doesDirectoryExist . (</> "install"))
-      mapM_ act $ dirs
+      mapM_ act dirs
     Nothing -> act ""
 
 sizeCmd :: Mode -> Maybe Recursion -> Bool -> IO ()
