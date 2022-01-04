@@ -3,6 +3,7 @@
 ## 0.4.4 (2022-01-04)
 - handle .stack-work/ consistently for --subdir and --recursive
 - remind user to use '--delete' for removal
+- purge-older: output is now sorted by ghc versions
 
 ## 0.4.3 (2021-11-23)
 - 'delete-work' now prints ".stack-work" would be deleted
