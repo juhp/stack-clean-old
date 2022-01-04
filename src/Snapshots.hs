@@ -130,7 +130,8 @@ cleanOldStackWork :: Deletion -> Natural -> Maybe String -> IO ()
 cleanOldStackWork deletion keep msystem = do
   setStackWorkInstallDir msystem
   dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
-  let ghcs = groupOn takeFileName dirs
+  let ghcs = sortOn (readVersion . takeFileName . head) $
+             groupOn takeFileName dirs
   mapM_ removeOlder ghcs
   where
     removeOlder :: [FilePath] -> IO ()
