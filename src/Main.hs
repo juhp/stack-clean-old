@@ -95,49 +95,41 @@ main = do
                 "Specify which of the OS platforms to work on (eg 'x86_64-linux-tinfo6' or 'aarch64-linux-nix', etc)"
 
 withRecursion :: Bool -> Maybe Recursion -> IO () -> IO ()
-withRecursion needinstall mrecursion act = do
-  case mrecursion of
-    Just recursion -> do
-      dirs <- (if recursion == Recursive
-               then map takeDirectory <$> findStackWorks
-               else listStackSubdirs)
-              >>= if needinstall
-                  then filterM (doesDirectoryExist . (</> "install"))
-                  else return
-      forM_ dirs $ \dir ->
-        withCurrentDirectory dir $ do
-        putStrLn $ "\n" ++ takeFileName dir ++ "/"
-        act
-    Nothing -> act
+withRecursion needinstall mrecursion =
+  withRecursion' True needinstall mrecursion . const
 
-withRecursion' :: Maybe Recursion -> (FilePath -> IO ()) -> IO ()
-withRecursion' mrecursion act = do
+withRecursion' :: Bool -> Bool -> Maybe Recursion -> (FilePath -> IO ()) -> IO ()
+withRecursion' changedir needinstall mrecursion act = do
   case mrecursion of
     Just recursion -> do
       dirs <- (if recursion == Recursive
                then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
                else listStackSubdirs)
-              >>= filterM (doesDirectoryExist . (</> "install"))
-      mapM_ act dirs
+              >>= if needinstall
+                  then filterM (doesDirectoryExist . (</> "install"))
+                  else return
+      forM_ dirs $ \dir ->
+        if changedir
+        then
+          withCurrentDirectory dir $ do
+          putStrLn $ "\n" ++ takeFileName dir ++ "/"
+          act dir
+        else act dir
     Nothing -> act ""
 
 sizeCmd :: Mode -> Maybe Recursion -> Bool -> IO ()
 sizeCmd mode mrecursion notHuman =
-  withRecursion' mrecursion $ \dir ->
   case mode of
-    Project -> sizeStackWork notHuman dir
+    Project -> withRecursion' False False mrecursion $ sizeStackWork notHuman
     Snapshots -> sizeSnapshots notHuman
     Compilers -> sizeGhcInstalls notHuman
     GHC -> do
       sizeCmd Snapshots Nothing notHuman
       sizeCmd Compilers Nothing notHuman
-    Default ->
-      if isJust mrecursion
-      then sizeStackWork notHuman dir
-      else do
+    Default -> do
       isProject <- doesDirectoryExist ".stack-work"
-      if isProject
-        then sizeCmd Project Nothing notHuman
+      if isProject || isJust mrecursion
+        then sizeCmd Project mrecursion notHuman
         else sizeCmd GHC Nothing notHuman
 
 listCmd :: Mode -> Maybe Recursion -> Maybe Version -> Maybe String -> IO ()
