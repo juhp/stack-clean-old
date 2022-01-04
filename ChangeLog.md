@@ -1,5 +1,9 @@
 # Release history for stack-clean-old-work
 
+## 0.4.4 (2022-01-04)
+- handle .stack-work/ consistently for --subdir and --recursive
+- remind user to use '--delete' for removal
+
 ## 0.4.3 (2021-11-23)
 - 'delete-work' now prints ".stack-work" would be deleted
 - prompts now print what would be deleted

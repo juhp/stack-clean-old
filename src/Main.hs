@@ -176,7 +176,7 @@ removeCmd deletion mode mrecursion ghcver msystem = do
         if isProject
           then removeCmd deletion Project Nothing ghcver msystem
           else removeCmd deletion GHC Nothing ghcver msystem
-  remindDelete
+  remindDelete deletion
 
 removeMinorsCmd :: Deletion -> Mode -> Maybe Recursion -> Maybe Version
                 -> Maybe String -> IO ()
@@ -200,19 +200,19 @@ removeMinorsCmd deletion mode mrecursion mver msystem = do
         if isProject
           then removeMinorsCmd deletion Project Nothing mver msystem
           else removeMinorsCmd deletion GHC Nothing mver msystem
-  remindDelete
+  remindDelete deletion
 
 purgeOlderCmd :: Deletion -> Natural -> Maybe Recursion -> Maybe String -> IO ()
 purgeOlderCmd deletion keep mrecursion msystem = do
   withRecursion True mrecursion $
     cleanOldStackWork deletion keep msystem
-  remindDelete
+  remindDelete deletion
 
 deleteWorkCmd :: Deletion -> Maybe Recursion -> IO ()
 deleteWorkCmd deletion mrecursion = do
   withRecursion False mrecursion $
     removeStackWork deletion
-  remindDelete
+  remindDelete deletion
 
 findStackWorks :: IO [FilePath]
 findStackWorks =

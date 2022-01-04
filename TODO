@@ -2,7 +2,7 @@
 - follow snapshots by installed ghc versions
 
 - track snapshot dependencies through package .conf files
-- clean up dist/ too
+* clean up dist/ too
 - handle ghc super version
 - count (dirs/installs)
 - types for dirs (Install, Snapshots, Programs)
