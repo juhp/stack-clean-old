@@ -94,13 +94,14 @@ main = do
     systemOpt = strOptionWith 'o' "os-system" "SYSTEM"
                 "Specify which of the OS platforms to work on (eg 'x86_64-linux-tinfo6' or 'aarch64-linux-nix', etc)"
 
-withRecursion :: Maybe Recursion -> IO () -> IO ()
-withRecursion mrecursion act = do
+withRecursion :: Bool -> Maybe Recursion -> IO () -> IO ()
+withRecursion needinstall mrecursion act = do
   case mrecursion of
     Just recursion -> do
-      dirs <- if recursion == Recursive
-              then map takeDirectory <$> findStackWorks
-              else listStackSubdirs
+      dirs <- (if recursion == Recursive
+               then map takeDirectory <$> findStackWorks
+               else listStackSubdirs)
+              >>= if needinstall then (filterM (doesDirectoryExist . (</> "install"))) else return
       forM_ dirs $ \dir ->
         withCurrentDirectory dir $ do
         putStrLn $ "\n" ++ takeFileName dir ++ "/"
@@ -111,10 +112,11 @@ withRecursion' :: Maybe Recursion -> (FilePath -> IO ()) -> IO ()
 withRecursion' mrecursion act = do
   case mrecursion of
     Just recursion -> do
-      dirs <- if recursion == Recursive
-              then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
-              else listStackSubdirs
-      mapM_ act dirs
+      dirs <- (if recursion == Recursive
+               then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
+               else listStackSubdirs)
+              >>= filterM (doesDirectoryExist . (</> "install"))
+      mapM_ act $ dirs
     Nothing -> act ""
 
 sizeCmd :: Mode -> Maybe Recursion -> Bool -> IO ()
@@ -138,7 +140,7 @@ sizeCmd mode mrecursion notHuman =
 
 listCmd :: Mode -> Maybe Recursion -> Maybe Version -> Maybe String -> IO ()
 listCmd mode mrecursion mver msystem =
-  withRecursion mrecursion $
+  withRecursion True mrecursion $
   case mode of
     Project -> setStackWorkInstallDir msystem >> listGhcSnapshots mver
     Snapshots -> setStackSnapshotsDir msystem >> listGhcSnapshots mver
@@ -155,7 +157,7 @@ listCmd mode mrecursion mver msystem =
 removeCmd :: Deletion -> Mode -> Maybe Recursion -> Version -> Maybe String
           -> IO ()
 removeCmd deletion mode mrecursion ghcver msystem =
-  withRecursion mrecursion $
+  withRecursion True mrecursion $
   case mode of
     Project -> do
       cwd <- getCurrentDirectory
@@ -178,7 +180,7 @@ removeCmd deletion mode mrecursion ghcver msystem =
 removeMinorsCmd :: Deletion -> Mode -> Maybe Recursion -> Maybe Version
                 -> Maybe String -> IO ()
 removeMinorsCmd deletion mode mrecursion mver msystem =
-  withRecursion mrecursion $
+  withRecursion True mrecursion $
   case mode of
     Project -> do
       cwd <- getCurrentDirectory
@@ -200,19 +202,18 @@ removeMinorsCmd deletion mode mrecursion mver msystem =
 
 purgeOlderCmd :: Deletion -> Natural -> Maybe Recursion -> Maybe String -> IO ()
 purgeOlderCmd deletion keep mrecursion msystem =
-  withRecursion mrecursion $
+  withRecursion True mrecursion $
   cleanOldStackWork deletion keep msystem
 
 deleteWorkCmd :: Deletion -> Maybe Recursion -> IO ()
 deleteWorkCmd deletion mrecursion =
-  withRecursion mrecursion $
+  withRecursion False mrecursion $
   removeStackWork deletion
 
 findStackWorks :: IO [FilePath]
 findStackWorks =
   -- ignore find errors (e.g. access rights)
-  cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
-  >>= fmap L.sort . filterM (doesDirectoryExist . (</> "install")) . lines
+  L.sort . lines <$> cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
 
 listStackSubdirs :: IO [FilePath]
 listStackSubdirs =
