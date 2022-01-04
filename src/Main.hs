@@ -227,4 +227,4 @@ listStackSubdirs =
 
 remindDelete :: Deletion -> IO ()
 remindDelete deletion =
-  unless (isDelete deletion) $ putStrLn "\nUse --delete for removal"
+  unless (isDelete deletion) $ putStrLn "\n(use --delete for removal)"
