@@ -4,8 +4,7 @@ A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
 snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
-`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [-d|--delete] [(-p|--project) | (-g|--ghc)] [GHCVER]
-`
+`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [-d|--delete] [(-p|--project)|(-g|--ghc)] [(-s|--subdirs)|(-r|--recursive)] [GHCVER]`
 
 Options:
 
@@ -83,18 +82,16 @@ NB: If you regularly build your project for several branches/tags against the sa
 
 ### Deleting all `.stack-work/` subdirectories
 `stack-clean-old delete-work --recursive` can be used to remove recursively
-_all_ `.stack-work/` dirs from a project to save space
-(seems same as `stack clean --full`).
-
-`stack-clean-old delete-work --all` works from outside stack projects:
-please use with care with `--delete`.
+_all_ `.stack-work/` dirs within (or outside) a project directory to save
+space (seems same as `stack clean --full` inside a project).
 
 ### Help output
 (Note you can also run this tool via `stack clean-old`.)
 
 To get help you can run `stack-clean-old --help` or just:
 ```ShellSession
-$ Stack clean up tool
+$ stack-clean-old
+Stack clean up tool
 
 Usage: stack-clean-old [--version] COMMAND
   Cleans away old stack-work builds (and pending: stack snapshots) to recover
@@ -120,7 +117,8 @@ Available commands:
 Run `stack install` or `cabal install`
 
 ## Related
-This tool complements [stack-all](https://hackage.haskell.org/package/stack-all)
+This tool complements
+[stack-all](https://hackage.haskell.org/package/stack-all)
 which builds projects across LTS major versions and
 hence generates a lot of stack builds.
 
@@ -130,7 +128,7 @@ a similar tool for cleaning old cached cabal build files.
 ## Contributing
 BSD license
 
-Project: https://github.com/juhp/stack-clean-old
+Project: <https://github.com/juhp/stack-clean-old>
 
 ## Disclaimer
 Use at your own risk: the author takes no responsibility for any loss or
