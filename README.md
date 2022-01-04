@@ -4,17 +4,15 @@ A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
 snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
-`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [-d|--delete] [(-p|--project)|(-g|--ghc)] [(-s|--subdirs)|(-r|--recursive)] [GHCVER]`
+`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
 
-Options:
+In a project directory it acts on `.stack-work/install/` by default,
+otherwise on `~/.stack/{snapshots,programs}/`.
 
-- `--project` (default in a stack project dir): act on `.stack-work/install/`
-- `--global` (default outside a project dir): act on `~/.stack/snapshots/` and `~/.stack/programs/`
-
-and the subcommands:
+Subcommands:
 
 `size`:
-    prints the total size of the above directories
+    prints the total size of `.stack-work/` or `~/.stack/`
     (`size` does not take a GHCVER argument).
 
 `list`:
@@ -26,18 +24,24 @@ and the subcommands:
 
 `keep-minor`:
     removes the builds/installs for older minor releases of ghc major versions.
-    If GHCVER is given then only minor versions older than it are removed.
+    If GHCVER is given then only minor versions older than it
+    (or than the latest installed minor version) are removed.
+    If no GHCVER is given it applies to each installed ghc major version.
 
-`purge-older` and `delete-work`:
-    see sections below
+`purge-older`:
+    removes snapshot builds with older timestamps
 
-If you remove any needed snapshot builds for a version of ghc,
-then you would have to rebuild them again for any projects still using them,
-so removal should be used cautiously, but it can recover a lot of diskspace.
+`delete-work`:
+    removes `.stack-work` directories completely
 
 Since version 0.4 dry-run mode is now the default and one needs to use
 `--delete` (`-d`) for actual deletion of files,
 after checking the dry-run output first.
+
+If you should remove any needed snapshot builds,
+then they will get rebuilt again by stack next time you build any projects
+using them, so removals should be done carefully
+but can recover a lot of diskspace.
 
 ### Example usage
 List a project's builds:
@@ -54,7 +58,7 @@ $ stack-clean-old remove --delete --project 8.2.2
 ```
 (--project is optional in a project dir).
 
-Remove stack ghc-8.4 snapshot builds and compilers before 8.4.4:
+Remove stack ghc-8.4 snapshot builds and minor compilers before 8.4.4:
 ```ShellSession
 $ stack-clean-old list --global 8.4
 421M  8.4.1  (7 dirs)
