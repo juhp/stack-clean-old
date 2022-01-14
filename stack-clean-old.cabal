@@ -1,5 +1,5 @@
 name:                stack-clean-old
-version:             0.4.4
+version:             0.4.5
 synopsis:            Clean away old stack build artefacts
 description:
         A tool for removing old .stack-work/install builds and

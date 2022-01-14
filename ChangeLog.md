@@ -1,5 +1,8 @@
 # Release history for stack-clean-old-work
 
+## 0.4.5 (2022-01-14)
+- fix multiple reminders about using --delete
+
 ## 0.4.4 (2022-01-04)
 - handle .stack-work/ consistently for --subdir and --recursive
 - remind user to use '--delete' for removal
