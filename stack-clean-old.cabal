@@ -1,6 +1,6 @@
 name:                stack-clean-old
-version:             0.4.5
-synopsis:            Clean away old stack build artefacts
+version:             0.4.6
+synopsis:            Clean away old stack build artifacts
 description:
         A tool for removing old .stack-work/install builds and
         .stack/snapshots & programs for older ghc versions

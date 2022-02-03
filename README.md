@@ -43,6 +43,11 @@ then they will get rebuilt again by stack next time you build any projects
 using them, so removals should be done carefully
 but can recover a lot of diskspace.
 
+Further the commands can use `--subdirs` or `--recursive` to run over
+the projects in subdirs under the current directory or
+all matching `.stack-work` dirs from the current directory and below
+respectively.
+
 ### Example usage
 List a project's builds:
 ```ShellSession
