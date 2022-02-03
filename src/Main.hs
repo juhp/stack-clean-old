@@ -226,7 +226,7 @@ findStackWorks =
 
 listStackSubdirs :: IO [FilePath]
 listStackSubdirs =
-  listDirectory "." >>= filterM (\f -> doesDirectoryExist (f </> ".stack-work")) . L.sort
+  listDirectory "." >>= filterM (doesDirectoryExist . (</> ".stack-work")) . L.sort
 
 remindDelete :: Deletion -> IO ()
 remindDelete deletion =
