@@ -106,7 +106,7 @@ withRecursion' changedir needinstall mrecursion act = do
                then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
                else listStackSubdirs)
               >>= if needinstall
-                  then filterM (doesDirectoryExist . (</> "install"))
+                  then filterM (doesDirectoryExist . (</> ".stack-work/install"))
                   else return
       forM_ dirs $ \dir ->
         if changedir
