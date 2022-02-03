@@ -112,7 +112,7 @@ withRecursion' changedir needinstall mrecursion act = do
         if changedir
         then
           withCurrentDirectory dir $ do
-          putStrLn $ "\n" ++ takeFileName dir ++ "/"
+          putStrLn $ "\n" ++ (if recursion == Recursive then id else takeFileName) dir ++ "/"
           act dir
         else act dir
     Nothing -> act ""
