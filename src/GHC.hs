@@ -33,7 +33,7 @@ setStackProgramsDir msystem =
 getGhcInstallDirs :: Maybe Version -> Maybe String -> IO [FilePath]
 getGhcInstallDirs mghcver msystem = do
   setStackProgramsDir msystem
-  sortOn ghcInstallVersion <$> globDirs matchVersion
+  sortOn ghcInstallVersion <$> globDirs ("ghc-" ++ matchVersion)
   where
     matchVersion =
       case mghcver of
