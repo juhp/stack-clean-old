@@ -6,13 +6,17 @@ snapshot builds and ghc versions to recover diskspace.
 ## Usage
 `stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
 
-In a project directory it acts on `.stack-work/install/` by default,
-otherwise on `~/.stack/{snapshots,programs}/`.
+In a project directory it acts on `.stack-work/install/` by default, otherwise
+on the *Stack Root location* `${STACK_ROOT}/{snapshots,programs}/`. If
+`${STACK_ROOT}` is unset, the *Stack Root location* is `~/.stack/`. See
+[official documentation][stack_root].
+
+[stack_root]: https://docs.haskellstack.org/en/stable/environment_variables/#stack_root
 
 Subcommands:
 
 `size`:
-    prints the total size of `.stack-work/` or `~/.stack/`
+    prints the total size of `.stack-work/` of project(s) or the *Stack Root location*.
     (`size` does not take a GHCVER argument).
 
 `list`:

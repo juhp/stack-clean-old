@@ -1,5 +1,9 @@
 # Release history for stack-clean-old
 
+## Unreleased
+- add support for `${STACK_ROOT}` environment variable to override the Stack
+  Root location
+
 ## 0.4.6 (2022-02-03)
 - fix --recursive and --subdirs to work again
 - show --recursive dir paths
