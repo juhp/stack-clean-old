@@ -9,16 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ghc: ['9.2', '9.0', '8.10', '8.8', '8.6', '8.4', '8.2', '8.0']
+        ghc: ['9.4', '9.2', '9.0', '8.10', '8.8', '8.6', '8.4', '8.2', '8.0']
     name: Haskell GHC ${{ matrix.ghc }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: haskell/actions/setup@v1
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
         with:
           ghc-version: ${{ matrix.ghc }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.cabal
