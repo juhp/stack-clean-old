@@ -27,7 +27,8 @@ import System.Directory hiding (removeDirectoryRecursive, removeFile)
 import System.FilePath
 import Text.Printf
 
-import Directories (globDirs, getStackSubdir, switchToSystemDirUnder)
+import Directories (globDirs, getStackSubdir, listCurrentDirectory,
+                    switchToSystemDirUnder)
 import qualified Remove
 import Types
 import Versions
@@ -148,7 +149,7 @@ cleanOldStackWork deletion keep msystem = do
 
         newestTimeStamp dir = do
           withCurrentDirectory dir $ do
-            files <- listDirectory "."
+            files <- listCurrentDirectory
             timestamp <- maximum <$> mapM getModificationTime files
             return (dir, timestamp)
 

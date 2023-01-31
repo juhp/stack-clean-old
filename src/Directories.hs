@@ -1,7 +1,8 @@
 module Directories (
   getStackSubdir,
   globDirs,
-  switchToSystemDirUnder
+  switchToSystemDirUnder,
+  listCurrentDirectory
   )
 where
 
@@ -26,7 +27,7 @@ switchToSystemDirUnder msystem dir = do
   if exists
     then setCurrentDirectory dir
     else error' $ dir ++ " not found"
-  systems <- listDirectory "."
+  systems <- listCurrentDirectory
   -- FIXME be more precise/check "system" dirs
   -- eg 64bit intel Linux: x86_64-linux-tinfo6
   let system =
@@ -43,3 +44,7 @@ switchToSystemDirUnder msystem dir = do
                     ["Please specify platform with --os-system (-o).",
                       dir ++ " has:"] ++ ss
   setCurrentDirectory system
+
+listCurrentDirectory :: IO [FilePath]
+listCurrentDirectory =
+  filter (\d -> not (head d == '.')) <$> listDirectory "."
