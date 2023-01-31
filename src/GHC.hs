@@ -7,6 +7,7 @@ module GHC (
 where
 
 import Control.Monad.Extra
+import Data.Char (isDigit)
 import Data.List.Extra
 import Data.Version.Extra
 import SimpleCmd
@@ -43,7 +44,14 @@ getGhcInstallDirs mghcver msystem = do
 
 ghcInstallVersion :: FilePath -> Version
 ghcInstallVersion =
-  readVersion . takeWhileEnd (/= '-') .  dropSuffix ".temp"
+  readVersion . checkChars . takeWhileEnd (/= '-') .  dropSuffix ".temp"
+  where
+
+    checkChars vs =
+      let isVerChar c = isDigit c || c == '.'
+      in if all isVerChar vs
+         then vs
+         else error $ "unknown version:" +-+ vs
 
 listGhcInstallation :: Maybe Version -> Maybe String -> IO ()
 listGhcInstallation mghcver msystem = do
