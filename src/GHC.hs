@@ -33,13 +33,16 @@ setStackProgramsDir msystem =
 getGhcInstallDirs :: Maybe Version -> Maybe String -> IO [FilePath]
 getGhcInstallDirs mghcver msystem = do
   setStackProgramsDir msystem
-  sortOn ghcInstallVersion <$> globDirs ("ghc-" ++ matchVersion)
+  dirs <- map dropTrailingSlash <$> globDirs ("ghc-" ++ matchVersion)
+  return $ sortOn ghcInstallVersion dirs
   where
+    -- 'globDirs' may return something like @["ghc-9.4.5/"]@, so, need to clean trailing slash.
+    dropTrailingSlash = dropWhileEnd (\ c -> c == '/' || c == '\\')
     matchVersion =
       case mghcver of
         Nothing -> "*"
         Just ver ->
-          "*-" ++ showVersion ver ++ if isMajorVersion ver then "*" else ""
+          showVersion ver ++ if isMajorVersion ver then "*" else ""
 
 ghcInstallVersion :: FilePath -> Version
 ghcInstallVersion =
