@@ -57,29 +57,29 @@ examples include 'x86_64-linux-tinfo6', 'x86_64-linux', 'aarch64-linux-nix',
 List a project's builds:
 ```ShellSession
 $ stack-clean-old list
-154M  8.2.2  (5 dirs)
-154M  8.4.4  (5 dirs)
-163M  8.6.5  (5 dirs)
+154M  9.2.8  (5 dirs)
+154M  9.4.5  (5 dirs)
+163M  9.6.2  (5 dirs)
 ```
-Remove project's 8.2.2 builds:
+Remove project's 9.0.2 builds:
 ```ShellSession
-$ stack-clean-old remove --delete --project 8.2.2
+$ stack-clean-old remove --delete --project 9.0.2
 :
 ```
 (--project is optional in a project dir).
 
-Remove stack ghc-8.4 snapshot builds and minor compilers before 8.4.4:
+Remove stack ghc-9.4 snapshot builds and minor compilers before 9.4.4:
 ```ShellSession
-$ stack-clean-old list --global 8.4
-421M  8.4.1  (7 dirs)
-368M  8.4.2  (6 dirs)
-489M  8.4.3  (8 dirs)
-799M  8.4.4  (24 dirs)
-$ stack-clean-old keep-minor -d -g 8.4.4
-ghc-tinfo6-8.4.3 removed
-7 dirs removed for 8.4.1
-6 dirs removed for 8.4.2
-8 dirs removed for 8.4.3
+$ stack-clean-old list --global 9.4
+421M  9.4.1  (7 dirs)
+368M  9.4.2  (6 dirs)
+489M  9.4.3  (8 dirs)
+799M  9.4.4  (24 dirs)
+$ stack-clean-old keep-minor -d -g 9.4.4
+ghc-tinfo6-9.4.3 removed
+7 dirs removed for 9.4.1
+6 dirs removed for 9.4.2
+8 dirs removed for 9.4.3
 ```
 (--global is optional outside a project dir).
 
