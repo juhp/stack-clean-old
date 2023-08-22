@@ -4,7 +4,7 @@ A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
 snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
-`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
+`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)|(-C|--compilers)|(-T|--tarballs)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
 
 In a project directory it acts on `.stack-work/install/` by default,
 otherwise on `~/.stack/{snapshots,programs}/`.
@@ -49,9 +49,9 @@ all matching `.stack-work` dirs from the current directory and below
 respectively.
 
 Note is you have different ghc variants/archs installed
-you may need to use the `--platform` to choose which one to query/clean:
-examples include 'x86_64-linux-tinfo6', 'x86_64-linux', 'aarch64-linux-nix',
-'x86_64-osx', 'aarch64-osx', etc.
+you may need to use the `--platform` option to choose which one to query/clean:
+examples include `x86_64-linux-tinfo6`, `x86_64-linux`, `aarch64-linux-nix`,
+`x86_64-osx`, `aarch64-osx`, etc.
 
 ### Example usage
 List a project's builds:
@@ -99,15 +99,18 @@ NB: If you regularly build your project for several branches/tags against the sa
 _all_ `.stack-work/` dirs within (or outside) a project directory to save
 space (seems same as `stack clean --full` inside a project).
 
-### Help output
+## Help output
 (Note you can also run this tool via `stack clean-old`.)
 
 To get help you can run `stack-clean-old --help` or just:
 ```ShellSession
+$ stack-clean-old --version
+0.4.7
 $ stack-clean-old
 Stack clean up tool
 
 Usage: stack-clean-old [--version] COMMAND
+
   Cleans away old stack-work builds (and pending: stack snapshots) to recover
   diskspace. Use the --delete option to perform actual removals.
   https://github.com/juhp/stack-clean-old#readme
@@ -124,6 +127,64 @@ Available commands:
   purge-older              Purge older builds in .stack-work/install
   delete-work              Remove project's .stack-work/ (optionally
                            recursively)
+```
+
+### Command options
+All the commands have similar options. e.g.:
+
+Size and list command:
+```
+$ stack-clean-old list --help
+Usage: stack-clean-old list [(-P|--project) | (-S|--snapshots) | (-G|--global) |
+                              (-C|--compilers) | (-T|--tarballs)]
+                            [(-s|--subdirs) | (-r|--recursive)] [GHCVER]
+                            [-o|--platform SYSTEM]
+
+  List sizes per ghc version
+
+Available options:
+  -P,--project             Act on current project's .stack-work/ [default in
+                           project dir]
+  -S,--snapshots           Act on ~/.stack/snapshots/
+  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
+                           outside project dir]
+  -C,--compilers           Act on ~/.stack/programs/ installations
+  -T,--tarballs            Act on ~/.stack/programs/ tarballs
+  -s,--subdirs             List subdirectories
+  -r,--recursive           List subdirectories
+  -o,--platform SYSTEM     Specify which OS platform to work on (eg
+                           'x86_64-linux-tinfo6', 'aarch64-linux-nix',
+                           'x86_64-osx', 'aarch64-osx', etc)
+  -h,--help                Show this help text
+```
+
+Removal commands additionally have `--delete`:
+```shellsession
+$ stack-clean-old remove --help
+Usage: stack-clean-old remove [-d|--delete]
+                              [(-P|--project) | (-S|--snapshots) |
+                                (-G|--global) | (-C|--compilers) |
+                                (-T|--tarballs)]
+                              [(-s|--subdirs) | (-r|--recursive)] GHCVER
+                              [-o|--platform SYSTEM]
+
+  Remove for a ghc version
+
+Available options:
+  -d,--delete              Do deletion [default is dryrun]
+  -P,--project             Act on current project's .stack-work/ [default in
+                           project dir]
+  -S,--snapshots           Act on ~/.stack/snapshots/
+  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
+                           outside project dir]
+  -C,--compilers           Act on ~/.stack/programs/ installations
+  -T,--tarballs            Act on ~/.stack/programs/ tarballs
+  -s,--subdirs             List subdirectories
+  -r,--recursive           List subdirectories
+  -o,--platform SYSTEM     Specify which OS platform to work on (eg
+                           'x86_64-linux-tinfo6', 'aarch64-linux-nix',
+                           'x86_64-osx', 'aarch64-osx', etc)
+  -h,--help                Show this help text
 ```
 
 ## Installation
