@@ -47,4 +47,4 @@ switchToSystemDirUnder msystem dir = do
 
 listCurrentDirectory :: IO [FilePath]
 listCurrentDirectory =
-  filter (\d -> not (head d == '.')) <$> listDirectory "."
+  filter (\d -> head d /= '.') <$> listDirectory "."
