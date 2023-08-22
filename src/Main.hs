@@ -72,8 +72,8 @@ main = do
   where
     modeOpt =
       flagWith' Project 'P' "project" "Act on current project's .stack-work/ [default in project dir]" <|>
-      flagWith' GHC 'G' "global" "Act on both ~/.stack/{programs,snapshots}/ [default outside project dir]" <|>
       flagWith' Snapshots 'S' "snapshots" "Act on ~/.stack/snapshots/" <|>
+      flagWith' GHC 'G' "global" "Act on both ~/.stack/{programs,snapshots}/ [default outside project dir]" <|>
       flagWith Default Compilers 'C' "compilers" "Act on ~/.stack/programs/"
 
     deleteOpt = flagWith Dryrun Delete 'd' "delete" "Do deletion [default is dryrun]"
