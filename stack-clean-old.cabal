@@ -27,6 +27,7 @@ executable stack-clean-old
   other-modules:       Paths_stack_clean_old
                        Directories
                        GHC
+                       GHCTarball
                        Remove
                        Snapshots
                        Types
