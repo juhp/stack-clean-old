@@ -48,6 +48,11 @@ the projects in subdirs under the current directory or
 all matching `.stack-work` dirs from the current directory and below
 respectively.
 
+Note is you have different ghc variants/archs installed
+you may need to use the `--platform` to choose which one to query/clean:
+examples include 'x86_64-linux-tinfo6', 'x86_64-linux', 'aarch64-linux-nix',
+'x86_64-osx', 'aarch64-osx', etc.
+
 ### Example usage
 List a project's builds:
 ```ShellSession

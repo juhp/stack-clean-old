@@ -91,8 +91,8 @@ main = do
     keepOption = optionalWith auto 'k' "keep" "INT"
                  "number of project builds per ghc version [default 5]" 5
 
-    systemOpt = strOptionWith 'o' "os-system" "SYSTEM"
-                "Specify which of the OS platforms to work on (eg 'x86_64-linux-tinfo6' or 'aarch64-linux-nix', etc)"
+    systemOpt = strOptionWith 'o' "platform" "SYSTEM"
+                "Specify which OS platform to work on (eg 'x86_64-linux-tinfo6', 'aarch64-linux-nix', 'x86_64-osx', 'aarch64-osx',  etc)"
 
 withRecursion :: Bool -> Maybe Recursion -> IO () -> IO ()
 withRecursion needinstall mrecursion =
