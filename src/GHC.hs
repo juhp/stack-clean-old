@@ -34,7 +34,7 @@ setStackProgramsDir msystem =
 getGhcInstallDirs :: Maybe Version -> Maybe String -> IO [FilePath]
 getGhcInstallDirs mghcver msystem = do
   setStackProgramsDir msystem
-  sortOn ghcInstallVersion <$> globDirs ("ghc-" ++ matchVersion)
+  sortOn ghcInstallVersion <$> globDirs ("ghc" ++ matchVersion)
   where
     matchVersion =
       case mghcver of
@@ -46,7 +46,6 @@ ghcInstallVersion :: FilePath -> Version
 ghcInstallVersion =
   readVersion . checkChars . takeWhileEnd (/= '-') .  dropSuffix ".temp"
   where
-
     checkChars vs =
       let isVerChar c = isDigit c || c == '.'
       in if all isVerChar vs
