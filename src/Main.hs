@@ -18,7 +18,7 @@ import System.Environment (lookupEnv)
 import System.FilePath
 import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
-import Directories (getStackSubdir, traversePlatforms)
+import Directories (getStackSubdir, traversePlatforms')
 import GHC
 import GHCTarball
 import Paths_stack_clean_old (version)
@@ -169,11 +169,11 @@ removeRun deletion mode mrecursion ghcver msystem =
     case mode of
       Project -> do
         cwd <- getCurrentDirectory
-        traversePlatforms (return stackWorkInstall) msystem $
+        traversePlatforms' (return stackWorkInstall) msystem $
           cleanGhcSnapshots deletion cwd ghcver
       Snapshots -> do
         cwd <- getCurrentDirectory
-        traversePlatforms (getStackSubdir "snapshots") msystem $
+        traversePlatforms' (getStackSubdir "snapshots") msystem $
           cleanGhcSnapshots deletion cwd ghcver
       Compilers -> do
         removeGhcVersionInstallation deletion ghcver msystem
@@ -201,11 +201,11 @@ removeMinorsRun deletion mode mrecursion mver msystem = do
     case mode of
       Project -> do
         cwd <- getCurrentDirectory
-        traversePlatforms (return stackWorkInstall) msystem $
+        traversePlatforms' (return stackWorkInstall) msystem $
           cleanMinorSnapshots deletion cwd mver
       Snapshots -> do
         cwd <- getCurrentDirectory
-        traversePlatforms (getStackSubdir "snapshots") msystem $
+        traversePlatforms' (getStackSubdir "snapshots") msystem $
           cleanMinorSnapshots deletion cwd mver
       Compilers -> removeGhcMinorInstallation deletion mver msystem
       Tarballs -> removeGhcMinorTarball deletion mver msystem

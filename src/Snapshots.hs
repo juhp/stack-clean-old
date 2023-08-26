@@ -102,28 +102,36 @@ removeVersionSnaps deletion cwd versnap = do
         Just reldir -> reldir
         Nothing -> "~" </> dropPrefix (home ++ "/") fp
 
-cleanGhcSnapshots :: Deletion -> FilePath -> Version -> IO ()
-cleanGhcSnapshots deletion cwd ghcver = do
-  ghcs <- getSnapshotDirs (Just ghcver)
-  when (isMajorVersion ghcver) $ do
-    Remove.prompt deletion ("all " ++ showVersion ghcver ++ " builds")
-  mapM_ (removeVersionSnaps deletion cwd) ghcs
+cleanGhcSnapshots :: Deletion -> FilePath -> Version -> String -> IO ()
+cleanGhcSnapshots deletion cwd ghcver platform = do
+  withCurrentDirectory platform $ do
+    ghcs <- getSnapshotDirs (Just ghcver)
+    unless (null ghcs) $
+      putStrLn (platform ++ ":")
+    when (isMajorVersion ghcver) $ do
+      Remove.prompt deletion ("all " ++ showVersion ghcver ++ " builds")
+    mapM_ (removeVersionSnaps deletion cwd) ghcs
 
-cleanMinorSnapshots :: Deletion -> FilePath -> Maybe Version -> IO ()
-cleanMinorSnapshots deletion cwd mghcver = do
-  ghcs <- getSnapshotDirs (majorVersion <$> mghcver)
-  case mghcver of
-    Nothing -> do
-      let majors = groupOn (majorVersion . snapsVersion) ghcs
-      forM_ majors $ \ gmajor ->
-        when (length gmajor > 1) $
-        mapM_ (removeVersionSnaps deletion cwd) (init gmajor)
-    Just ghcver -> do
-      let newestMinor = if isMajorVersion ghcver
-                        then (snapsVersion . last) ghcs
-                        else ghcver
-          gminors = filter ((< newestMinor) . snapsVersion) ghcs
-      mapM_ (removeVersionSnaps deletion cwd) gminors
+cleanMinorSnapshots :: Deletion -> FilePath -> Maybe Version -> String -> IO ()
+cleanMinorSnapshots deletion cwd mghcver platform = do
+  withCurrentDirectory platform $ do
+    ghcs <- getSnapshotDirs (majorVersion <$> mghcver)
+    case mghcver of
+      Nothing -> do
+        let majors = groupOn (majorVersion . snapsVersion) ghcs
+        unless (null majors) $
+          putStrLn (platform ++ ":")
+        forM_ majors $ \ gmajor ->
+          when (length gmajor > 1) $
+          mapM_ (removeVersionSnaps deletion cwd) (init gmajor)
+      Just ghcver -> do
+        let newestMinor = if isMajorVersion ghcver
+                          then (snapsVersion . last) ghcs
+                          else ghcver
+            gminors = filter ((< newestMinor) . snapsVersion) ghcs
+        unless (null gminors) $
+          putStrLn (platform ++ ":")
+        mapM_ (removeVersionSnaps deletion cwd) gminors
 
 cleanOldStackWork :: Deletion -> Natural -> Maybe String -> IO ()
 cleanOldStackWork deletion keep msystem = do
