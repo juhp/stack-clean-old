@@ -8,14 +8,14 @@ snapshot builds and ghc versions to recover diskspace.
 
 In a project directory it acts on `.stack-work/install/` by default,
 otherwise on `${STACK_ROOT}/{snapshots,programs}/`
-(the default *Stack root* is `~/.stack/`).
-See the [Stack root documentation](https://docs.haskellstack.org/en/stable/stack_root/)
+(the default *Stack root* is `~/.stack/`):
+see the [Stack root documentation](https://docs.haskellstack.org/en/stable/stack_root/).
 
 Subcommands:
 
 `size`:
-    prints the total size of `.stack-work/` of project(s) or the *Stack Root location*.
-    (`size` does not take a GHCVER argument).
+    prints the total size of `.stack-work/` of project(s) or the *Stack root*.
+    directories (`size` does not take a GHCVER argument).
 
 `list`:
     shows the total size and number of snapshots per ghc version
@@ -50,10 +50,9 @@ the projects in subdirs under the current directory or
 all matching `.stack-work` dirs from the current directory and below
 respectively.
 
-Note is you have different ghc variants/archs installed
-you may need to use the `--platform` option to choose which one to query/clean:
-examples include `x86_64-linux-tinfo6`, `x86_64-linux`, `aarch64-linux-nix`,
-`x86_64-osx`, `aarch64-osx`, etc.
+If you have different ghc variants/archs installed
+you can use `--platform` to restrict to one of then,
+otherwise they are each listed by default.
 
 ### Example usage
 List a project's builds:
@@ -107,7 +106,7 @@ space (seems same as `stack clean --full` inside a project).
 To get help you can run `stack-clean-old --help` or just:
 ```ShellSession
 $ stack-clean-old --version
-0.4.7
+0.4.8
 $ stack-clean-old
 Stack clean up tool
 
@@ -132,41 +131,14 @@ Available commands:
 ```
 
 ### Command options
-All the commands have similar options. e.g.:
+Most of the commands have similar options, e.g.:
 
-Size and list command:
-```
-$ stack-clean-old list --help
-Usage: stack-clean-old list [(-P|--project) | (-S|--snapshots) | (-G|--global) |
-                              (-C|--compilers) | (-T|--tarballs)]
-                            [(-s|--subdirs) | (-r|--recursive)] [GHCVER]
-                            [-o|--platform SYSTEM]
-
-  List sizes per ghc version
-
-Available options:
-  -P,--project             Act on current project's .stack-work/ [default in
-                           project dir]
-  -S,--snapshots           Act on ~/.stack/snapshots/
-  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
-                           outside project dir]
-  -C,--compilers           Act on ~/.stack/programs/ installations
-  -T,--tarballs            Act on ~/.stack/programs/ tarballs
-  -s,--subdirs             List subdirectories
-  -r,--recursive           List subdirectories
-  -o,--platform SYSTEM     Specify which OS platform to work on (eg
-                           'x86_64-linux-tinfo6', 'aarch64-linux-nix',
-                           'x86_64-osx', 'aarch64-osx', etc)
-  -h,--help                Show this help text
-```
-
-Removal commands additionally have `--delete`:
 ```shellsession
 $ stack-clean-old remove --help
 Usage: stack-clean-old remove [-d|--delete]
                               [(-P|--project) | (-S|--snapshots) |
-                                (-G|--global) | (-C|--compilers) |
-                                (-T|--tarballs)]
+                                (-C|--compilers) | (-T|--tarballs) |
+                                (-G|--global)]
                               [(-s|--subdirs) | (-r|--recursive)] GHCVER
                               [-o|--platform SYSTEM]
 
@@ -177,10 +149,10 @@ Available options:
   -P,--project             Act on current project's .stack-work/ [default in
                            project dir]
   -S,--snapshots           Act on ~/.stack/snapshots/
-  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
-                           outside project dir]
   -C,--compilers           Act on ~/.stack/programs/ installations
   -T,--tarballs            Act on ~/.stack/programs/ tarballs
+  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
+                           outside project dir]
   -s,--subdirs             List subdirectories
   -r,--recursive           List subdirectories
   -o,--platform SYSTEM     Specify which OS platform to work on (eg
@@ -188,6 +160,8 @@ Available options:
                            'x86_64-osx', 'aarch64-osx', etc)
   -h,--help                Show this help text
 ```
+
+(The `list` and `size` commands don't have `--delete`.)
 
 ## Installation
 

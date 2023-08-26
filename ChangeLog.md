@@ -1,8 +1,9 @@
 # Release history for stack-clean-old
 
-## 0.4.8
+## 0.4.8 (2023-08-26)
 - support the `STACK_ROOT` environment variable which overrides
   the default Stack root (`~/.stack`) by @PRESFIL (#12)
+- list all the platform variants by default (#15)
 
 ## 0.4.7 (2023-08-22)
 - add --tarballs for programs/ ghc tarballs too (#9)
