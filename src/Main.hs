@@ -126,7 +126,7 @@ sizeCmd mode mrecursion notHuman =
   case mode of
     Project -> withRecursion' False False mrecursion $ sizeStackWork notHuman
     Snapshots -> sizeSnapshots notHuman
-    Compilers -> sizeGhcInstalls notHuman
+    Compilers -> sizeGhcPrograms notHuman
     Tarballs -> error' "use --compilers"
     GHC -> do
       sizeCmd Snapshots Nothing notHuman

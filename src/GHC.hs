@@ -2,7 +2,7 @@ module GHC (
   listGhcInstallation,
   removeGhcMinorInstallation,
   removeGhcVersionInstallation,
-  sizeGhcInstalls
+  sizeGhcPrograms
   )
 where
 
@@ -22,8 +22,8 @@ getStackProgramsDir :: IO FilePath
 getStackProgramsDir =
   getStackSubdir "programs"
 
-sizeGhcInstalls :: Bool -> IO ()
-sizeGhcInstalls nothuman = do
+sizeGhcPrograms :: Bool -> IO ()
+sizeGhcPrograms nothuman = do
   programs <- getStackProgramsDir
   cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", programs]
 
