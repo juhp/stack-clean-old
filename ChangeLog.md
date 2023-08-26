@@ -1,8 +1,8 @@
 # Release history for stack-clean-old
 
-## Unreleased
-- add support for `${STACK_ROOT}` environment variable to override the Stack
-  Root location
+## 0.4.8
+- support the `STACK_ROOT` environment variable which overrides
+  the default Stack root (`~/.stack`) by @PRESFIL (#12)
 
 ## 0.4.7 (2023-08-22)
 - add --tarballs for programs/ ghc tarballs too (#9)
