@@ -4,7 +4,7 @@ A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
 snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
-`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
+`stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)|(-C|--compilers)|(-T|--tarballs)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
 
 In a project directory it acts on `.stack-work/install/` by default, otherwise
 on the *Stack Root location* `${STACK_ROOT}/{snapshots,programs}/`. If
@@ -52,33 +52,38 @@ the projects in subdirs under the current directory or
 all matching `.stack-work` dirs from the current directory and below
 respectively.
 
+Note is you have different ghc variants/archs installed
+you may need to use the `--platform` option to choose which one to query/clean:
+examples include `x86_64-linux-tinfo6`, `x86_64-linux`, `aarch64-linux-nix`,
+`x86_64-osx`, `aarch64-osx`, etc.
+
 ### Example usage
 List a project's builds:
 ```ShellSession
 $ stack-clean-old list
-154M  8.2.2  (5 dirs)
-154M  8.4.4  (5 dirs)
-163M  8.6.5  (5 dirs)
+154M  9.2.8  (5 dirs)
+154M  9.4.5  (5 dirs)
+163M  9.6.2  (5 dirs)
 ```
-Remove project's 8.2.2 builds:
+Remove project's 9.0.2 builds:
 ```ShellSession
-$ stack-clean-old remove --delete --project 8.2.2
+$ stack-clean-old remove --delete --project 9.0.2
 :
 ```
 (--project is optional in a project dir).
 
-Remove stack ghc-8.4 snapshot builds and minor compilers before 8.4.4:
+Remove stack ghc-9.4 snapshot builds and minor compilers before 9.4.4:
 ```ShellSession
-$ stack-clean-old list --global 8.4
-421M  8.4.1  (7 dirs)
-368M  8.4.2  (6 dirs)
-489M  8.4.3  (8 dirs)
-799M  8.4.4  (24 dirs)
-$ stack-clean-old keep-minor -d -g 8.4.4
-ghc-tinfo6-8.4.3 removed
-7 dirs removed for 8.4.1
-6 dirs removed for 8.4.2
-8 dirs removed for 8.4.3
+$ stack-clean-old list --global 9.4
+421M  9.4.1  (7 dirs)
+368M  9.4.2  (6 dirs)
+489M  9.4.3  (8 dirs)
+799M  9.4.4  (24 dirs)
+$ stack-clean-old keep-minor -d -g 9.4.4
+ghc-tinfo6-9.4.3 removed
+7 dirs removed for 9.4.1
+6 dirs removed for 9.4.2
+8 dirs removed for 9.4.3
 ```
 (--global is optional outside a project dir).
 
@@ -98,15 +103,18 @@ NB: If you regularly build your project for several branches/tags against the sa
 _all_ `.stack-work/` dirs within (or outside) a project directory to save
 space (seems same as `stack clean --full` inside a project).
 
-### Help output
+## Help output
 (Note you can also run this tool via `stack clean-old`.)
 
 To get help you can run `stack-clean-old --help` or just:
 ```ShellSession
+$ stack-clean-old --version
+0.4.7
 $ stack-clean-old
 Stack clean up tool
 
 Usage: stack-clean-old [--version] COMMAND
+
   Cleans away old stack-work builds (and pending: stack snapshots) to recover
   diskspace. Use the --delete option to perform actual removals.
   https://github.com/juhp/stack-clean-old#readme
@@ -123,6 +131,64 @@ Available commands:
   purge-older              Purge older builds in .stack-work/install
   delete-work              Remove project's .stack-work/ (optionally
                            recursively)
+```
+
+### Command options
+All the commands have similar options. e.g.:
+
+Size and list command:
+```
+$ stack-clean-old list --help
+Usage: stack-clean-old list [(-P|--project) | (-S|--snapshots) | (-G|--global) |
+                              (-C|--compilers) | (-T|--tarballs)]
+                            [(-s|--subdirs) | (-r|--recursive)] [GHCVER]
+                            [-o|--platform SYSTEM]
+
+  List sizes per ghc version
+
+Available options:
+  -P,--project             Act on current project's .stack-work/ [default in
+                           project dir]
+  -S,--snapshots           Act on ~/.stack/snapshots/
+  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
+                           outside project dir]
+  -C,--compilers           Act on ~/.stack/programs/ installations
+  -T,--tarballs            Act on ~/.stack/programs/ tarballs
+  -s,--subdirs             List subdirectories
+  -r,--recursive           List subdirectories
+  -o,--platform SYSTEM     Specify which OS platform to work on (eg
+                           'x86_64-linux-tinfo6', 'aarch64-linux-nix',
+                           'x86_64-osx', 'aarch64-osx', etc)
+  -h,--help                Show this help text
+```
+
+Removal commands additionally have `--delete`:
+```shellsession
+$ stack-clean-old remove --help
+Usage: stack-clean-old remove [-d|--delete]
+                              [(-P|--project) | (-S|--snapshots) |
+                                (-G|--global) | (-C|--compilers) |
+                                (-T|--tarballs)]
+                              [(-s|--subdirs) | (-r|--recursive)] GHCVER
+                              [-o|--platform SYSTEM]
+
+  Remove for a ghc version
+
+Available options:
+  -d,--delete              Do deletion [default is dryrun]
+  -P,--project             Act on current project's .stack-work/ [default in
+                           project dir]
+  -S,--snapshots           Act on ~/.stack/snapshots/
+  -G,--global              Act on both ~/.stack/{programs,snapshots}/ [default
+                           outside project dir]
+  -C,--compilers           Act on ~/.stack/programs/ installations
+  -T,--tarballs            Act on ~/.stack/programs/ tarballs
+  -s,--subdirs             List subdirectories
+  -r,--recursive           List subdirectories
+  -o,--platform SYSTEM     Specify which OS platform to work on (eg
+                           'x86_64-linux-tinfo6', 'aarch64-linux-nix',
+                           'x86_64-osx', 'aarch64-osx', etc)
+  -h,--help                Show this help text
 ```
 
 ## Installation

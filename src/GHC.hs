@@ -7,6 +7,7 @@ module GHC (
 where
 
 import Control.Monad.Extra
+import Data.Char (isDigit)
 import Data.List.Extra
 import Data.Version.Extra
 import SimpleCmd
@@ -33,7 +34,7 @@ setStackProgramsDir msystem =
 getGhcInstallDirs :: Maybe Version -> Maybe String -> IO [FilePath]
 getGhcInstallDirs mghcver msystem = do
   setStackProgramsDir msystem
-  sortOn ghcInstallVersion <$> globDirs ("ghc-" ++ matchVersion)
+  sortOn ghcInstallVersion <$> globDirs ("ghc" ++ matchVersion)
   where
     matchVersion =
       case mghcver of
@@ -43,7 +44,13 @@ getGhcInstallDirs mghcver msystem = do
 
 ghcInstallVersion :: FilePath -> Version
 ghcInstallVersion =
-  readVersion . takeWhileEnd (/= '-') .  dropSuffix ".temp"
+  readVersion . checkChars . takeWhileEnd (/= '-') .  dropSuffix ".temp"
+  where
+    checkChars vs =
+      let isVerChar c = isDigit c || c == '.'
+      in if all isVerChar vs
+         then vs
+         else error $ "unknown version:" +-+ vs
 
 listGhcInstallation :: Maybe Version -> Maybe String -> IO ()
 listGhcInstallation mghcver msystem = do

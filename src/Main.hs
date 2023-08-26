@@ -18,11 +18,12 @@ import System.FilePath
 import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
 import GHC
+import GHCTarball
 import Paths_stack_clean_old (version)
 import Snapshots
 import Types
 
-data Mode = Default | Project | Snapshots | Compilers | GHC
+data Mode = Default | Project | Snapshots | Compilers | GHC | Tarballs
 
 data Recursion = Subdirs | Recursive
   deriving Eq
@@ -72,9 +73,10 @@ main = do
   where
     modeOpt =
       flagWith' Project 'P' "project" "Act on current project's .stack-work/ [default in project dir]" <|>
-      flagWith' GHC 'G' "global" "Act on both ${STACK_ROOT}/{programs,snapshots}/ [default outside project dir]" <|>
-      flagWith' Snapshots 'S' "snapshots" "Act on ${STACK_ROOT}/snapshots/" <|>
-      flagWith Default Compilers 'C' "compilers" "Act on ${STACK_ROOT}/programs/"
+      flagWith' Snapshots 'S' "snapshots" "Act on ~/.stack/snapshots/" <|>
+      flagWith' GHC 'G' "global" "Act on both ~/.stack/{programs,snapshots}/ [default outside project dir]" <|>
+      flagWith' Compilers 'C' "compilers" "Act on ~/.stack/programs/ installations" <|>
+      flagWith Default Tarballs 'T' "tarballs" "Act on ~/.stack/programs/ tarballs"
 
     deleteOpt = flagWith Dryrun Delete 'd' "delete" "Do deletion [default is dryrun]"
 
@@ -91,8 +93,8 @@ main = do
     keepOption = optionalWith auto 'k' "keep" "INT"
                  "number of project builds per ghc version [default 5]" 5
 
-    systemOpt = strOptionWith 'o' "os-system" "SYSTEM"
-                "Specify which of the OS platforms to work on (eg 'x86_64-linux-tinfo6' or 'aarch64-linux-nix', etc)"
+    systemOpt = strOptionWith 'o' "platform" "SYSTEM"
+                "Specify which OS platform to work on (eg 'x86_64-linux-tinfo6', 'aarch64-linux-nix', 'x86_64-osx', 'aarch64-osx',  etc)"
 
 withRecursion :: Bool -> Maybe Recursion -> IO () -> IO ()
 withRecursion needinstall mrecursion =
@@ -123,6 +125,7 @@ sizeCmd mode mrecursion notHuman =
     Project -> withRecursion' False False mrecursion $ sizeStackWork notHuman
     Snapshots -> sizeSnapshots notHuman
     Compilers -> sizeGhcInstalls notHuman
+    Tarballs -> error' "use --compilers"
     GHC -> do
       sizeCmd Snapshots Nothing notHuman
       sizeCmd Compilers Nothing notHuman
@@ -139,6 +142,7 @@ listCmd mode mrecursion mver msystem =
     Project -> setStackWorkInstallDir msystem >> listGhcSnapshots mver
     Snapshots -> setStackSnapshotsDir msystem >> listGhcSnapshots mver
     Compilers -> listGhcInstallation mver msystem
+    Tarballs -> listGhcTarballs mver msystem
     GHC -> do
       listCmd Snapshots Nothing mver msystem
       listCmd Compilers Nothing mver msystem
@@ -169,6 +173,8 @@ removeRun deletion mode mrecursion ghcver msystem =
         cleanGhcSnapshots deletion cwd ghcver
       Compilers -> do
         removeGhcVersionInstallation deletion ghcver msystem
+      Tarballs -> do
+        removeGhcVersionTarball deletion ghcver msystem
       GHC -> do
         removeRun deletion Compilers Nothing ghcver msystem
         removeRun deletion Snapshots Nothing ghcver msystem
@@ -198,6 +204,7 @@ removeMinorsRun deletion mode mrecursion mver msystem = do
         setStackSnapshotsDir msystem
         cleanMinorSnapshots deletion cwd mver
       Compilers -> removeGhcMinorInstallation deletion mver msystem
+      Tarballs -> removeGhcMinorTarball deletion mver msystem
       GHC -> do
         removeMinorsRun deletion Compilers Nothing mver msystem
         removeMinorsRun deletion Snapshots Nothing mver msystem

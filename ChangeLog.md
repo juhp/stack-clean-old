@@ -4,6 +4,13 @@
 - add support for `${STACK_ROOT}` environment variable to override the Stack
   Root location
 
+## 0.4.7 (2023-08-22)
+- add --tarballs for programs/ ghc tarballs too (#9)
+- bug fix to match both ghc-*.* and ghc-variant-*.* (#14)
+- rename --os-system to --platform and add more explanation (#15)
+- parse ghc installation versions more carefully
+- ignore hidden files in stack dirs
+
 ## 0.4.6 (2022-02-03)
 - fix --recursive and --subdirs to work again
 - show --recursive dir paths
