@@ -1,5 +1,9 @@
 # Release history for stack-clean-old
 
+## Unreleased
+- add support for `${STACK_ROOT}` environment variable to override the Stack
+  Root location
+
 ## 0.4.7 (2023-08-22)
 - add --tarballs for programs/ ghc tarballs too (#9)
 - bug fix to match both ghc-*.* and ghc-variant-*.* (#14)

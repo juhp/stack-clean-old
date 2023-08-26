@@ -9,6 +9,7 @@ where
 import Data.List.Extra
 import SimpleCmd (error')
 import System.Directory
+import System.Environment
 import System.FilePath
 import System.FilePath.Glob
 
@@ -16,10 +17,18 @@ globDirs :: String -> IO [FilePath]
 globDirs pat = do
   map (dropPrefix "./") <$> namesMatching (pat ++ "/")
 
+getStackRootDir :: IO FilePath
+getStackRootDir = do
+  home <- getHomeDirectory
+  env <- lookupEnv "STACK_ROOT"
+  case env of
+    Just path | isAbsolute path -> return path
+    _                           -> return $ home </> ".stack"
+
 getStackSubdir :: FilePath -> IO FilePath
 getStackSubdir subdir = do
-  home <- getHomeDirectory
-  return $ home </> ".stack" </> subdir
+  stackRoot <- getStackRootDir
+  return $ stackRoot </> subdir
 
 switchToSystemDirUnder :: Maybe String -> FilePath -> IO ()
 switchToSystemDirUnder msystem dir = do
