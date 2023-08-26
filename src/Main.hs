@@ -14,6 +14,7 @@ import Numeric.Natural
 import SimpleCmd
 import SimpleCmdArgs
 import System.Directory
+import System.Environment (lookupEnv)
 import System.FilePath
 import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
@@ -30,32 +31,33 @@ data Recursion = Subdirs | Recursive
 
 main :: IO ()
 main = do
+  stackroot_str <- maybe "~/.stack" (const "$STACK_ROOT") <$> lookupEnv "STACK_ROOT"
   hSetBuffering stdout NoBuffering
   simpleCmdArgs (Just version) "Stack clean up tool"
     "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace. Use the --delete option to perform actual removals. https://github.com/juhp/stack-clean-old#readme" $
     subcommands
     [ Subcommand "size" "Total size" $
       sizeCmd
-      <$> modeOpt
+      <$> modeOpt stackroot_str
       <*> recursionOpt
       <*> notHumanOpt
     , Subcommand "list" "List sizes per ghc version" $
       listCmd
-      <$> modeOpt
+      <$> modeOpt stackroot_str
       <*> recursionOpt
       <*> optional ghcVerArg
       <*> optional systemOpt
     , Subcommand "remove" "Remove for a ghc version" $
       removeCmd
       <$> deleteOpt
-      <*> modeOpt
+      <*> modeOpt stackroot_str
       <*> recursionOpt
       <*> ghcVerArg
       <*> optional systemOpt
     , Subcommand "keep-minor" "Remove for previous ghc minor versions" $
       removeMinorsCmd
       <$> deleteOpt
-      <*> modeOpt
+      <*> modeOpt stackroot_str
       <*> recursionOpt
       <*> optional ghcVerArg
       <*> optional systemOpt
@@ -71,12 +73,12 @@ main = do
       <*> recursionOpt
     ]
   where
-    modeOpt =
+    modeOpt stackroot =
       flagWith' Project 'P' "project" "Act on current project's .stack-work/ [default in project dir]" <|>
-      flagWith' Snapshots 'S' "snapshots" "Act on ~/.stack/snapshots/" <|>
-      flagWith' GHC 'G' "global" "Act on both ~/.stack/{programs,snapshots}/ [default outside project dir]" <|>
-      flagWith' Compilers 'C' "compilers" "Act on ~/.stack/programs/ installations" <|>
-      flagWith Default Tarballs 'T' "tarballs" "Act on ~/.stack/programs/ tarballs"
+      flagWith' Snapshots 'S' "snapshots" ("Act on " ++ stackroot </> "snapshots/") <|>
+      flagWith' GHC 'G' "global" ("Act on both " ++ stackroot </> "{programs,snapshots}/ [default outside project dir]") <|>
+      flagWith' Compilers 'C' "compilers" ("Act on " ++ stackroot </> "programs/ installations") <|>
+      flagWith Default Tarballs 'T' "tarballs" ("Act on " ++ stackroot </> "programs/ tarballs")
 
     deleteOpt = flagWith Dryrun Delete 'd' "delete" "Do deletion [default is dryrun]"
 
