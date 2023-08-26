@@ -6,8 +6,9 @@ module Directories (
   )
 where
 
+import Control.Monad (unless)
 import Data.List.Extra
-import SimpleCmd (error')
+import SimpleCmd (error', warning)
 import System.Directory
 import System.Environment
 import System.FilePath
@@ -19,11 +20,15 @@ globDirs pat = do
 
 getStackRootDir :: IO FilePath
 getStackRootDir = do
-  home <- getHomeDirectory
-  env <- lookupEnv "STACK_ROOT"
-  case env of
-    Just path | isAbsolute path -> return path
-    _                           -> return $ home </> ".stack"
+  mroot <- lookupEnv "STACK_ROOT"
+  case mroot of
+    Just path -> do
+      unless (isAbsolute path) $
+        warning $ "STACK_ROOT is not absolute: " ++ path
+      return path
+    Nothing -> do
+      home <- getHomeDirectory
+      return $ home </> ".stack"
 
 getStackSubdir :: FilePath -> IO FilePath
 getStackSubdir subdir = do
