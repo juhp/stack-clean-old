@@ -76,8 +76,9 @@ getSnapshotDirs mghcver = do
 
 sizeSnapshots :: Bool -> Maybe String -> IO ()
 sizeSnapshots nothuman msystem =
-  traversePlatforms' (getStackSubdir "snapshots") msystem $ \plat ->
-  cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", plat]
+  traversePlatforms' (getStackSubdir "snapshots") msystem $ \plat -> do
+  cwd <- getCurrentDirectory
+  cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", cwd </> plat]
 
 listGhcSnapshots :: Maybe String -> Maybe Version -> FilePath -> IO ()
 listGhcSnapshots msystem mghcver dir = do
