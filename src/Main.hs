@@ -18,6 +18,7 @@ import System.Environment (lookupEnv)
 import System.FilePath
 import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
+import Directories (getStackSubdir, traversePlatforms)
 import GHC
 import GHCTarball
 import Paths_stack_clean_old (version)
@@ -41,6 +42,7 @@ main = do
       <$> modeOpt stackroot_str
       <*> recursionOpt
       <*> notHumanOpt
+      <*> optional systemOpt
     , Subcommand "list" "List sizes per ghc version" $
       listCmd
       <$> modeOpt stackroot_str
@@ -121,28 +123,28 @@ withRecursion' changedir needinstall mrecursion act = do
         else act dir
     Nothing -> act ""
 
-sizeCmd :: Mode -> Maybe Recursion -> Bool -> IO ()
-sizeCmd mode mrecursion notHuman =
+sizeCmd :: Mode -> Maybe Recursion -> Bool -> Maybe String -> IO ()
+sizeCmd mode mrecursion notHuman msystem =
   case mode of
     Project -> withRecursion' False False mrecursion $ sizeStackWork notHuman
-    Snapshots -> sizeSnapshots notHuman
+    Snapshots -> sizeSnapshots notHuman msystem
     Compilers -> sizeGhcPrograms notHuman
     Tarballs -> error' "use --compilers"
     GHC -> do
-      sizeCmd Snapshots Nothing notHuman
-      sizeCmd Compilers Nothing notHuman
+      sizeCmd Snapshots Nothing notHuman msystem
+      sizeCmd Compilers Nothing notHuman msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject || isJust mrecursion
-        then sizeCmd Project mrecursion notHuman
-        else sizeCmd GHC Nothing notHuman
+        then sizeCmd Project mrecursion notHuman msystem
+        else sizeCmd GHC Nothing notHuman msystem
 
 listCmd :: Mode -> Maybe Recursion -> Maybe Version -> Maybe String -> IO ()
 listCmd mode mrecursion mver msystem =
   withRecursion True mrecursion $
   case mode of
-    Project -> setStackWorkInstallDir msystem >> listGhcSnapshots mver
-    Snapshots -> setStackSnapshotsDir msystem >> listGhcSnapshots mver
+    Project -> listGhcSnapshots msystem mver stackWorkInstall
+    Snapshots -> getStackSubdir "snapshots" >>= listGhcSnapshots msystem mver
     Compilers -> listGhcInstallation mver msystem
     Tarballs -> listGhcTarballs mver msystem
     GHC -> do
@@ -167,12 +169,12 @@ removeRun deletion mode mrecursion ghcver msystem =
     case mode of
       Project -> do
         cwd <- getCurrentDirectory
-        setStackWorkInstallDir msystem
-        cleanGhcSnapshots deletion cwd ghcver
+        traversePlatforms (return stackWorkInstall) msystem $
+          cleanGhcSnapshots deletion cwd ghcver
       Snapshots -> do
         cwd <- getCurrentDirectory
-        setStackSnapshotsDir msystem
-        cleanGhcSnapshots deletion cwd ghcver
+        traversePlatforms (getStackSubdir "snapshots") msystem $
+          cleanGhcSnapshots deletion cwd ghcver
       Compilers -> do
         removeGhcVersionInstallation deletion ghcver msystem
       Tarballs -> do
@@ -199,12 +201,12 @@ removeMinorsRun deletion mode mrecursion mver msystem = do
     case mode of
       Project -> do
         cwd <- getCurrentDirectory
-        setStackWorkInstallDir msystem
-        cleanMinorSnapshots deletion cwd mver
+        traversePlatforms (return stackWorkInstall) msystem $
+          cleanMinorSnapshots deletion cwd mver
       Snapshots -> do
         cwd <- getCurrentDirectory
-        setStackSnapshotsDir msystem
-        cleanMinorSnapshots deletion cwd mver
+        traversePlatforms (getStackSubdir "snapshots") msystem $
+          cleanMinorSnapshots deletion cwd mver
       Compilers -> removeGhcMinorInstallation deletion mver msystem
       Tarballs -> removeGhcMinorTarball deletion mver msystem
       GHC -> do

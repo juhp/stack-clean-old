@@ -1,14 +1,11 @@
 {-# LANGUAGE CPP #-}
 
 module Snapshots (
-  --getSnapshotDirs
-  --, VersionSnapshots(..)
   cleanGhcSnapshots,
   cleanMinorSnapshots,
   cleanOldStackWork,
   listGhcSnapshots,
-  setStackSnapshotsDir,
-  setStackWorkInstallDir,
+  stackWorkInstall,
   sizeSnapshots,
   sizeStackWork,
   removeStackWork
@@ -28,7 +25,7 @@ import System.FilePath
 import Text.Printf
 
 import Directories (globDirs, getStackSubdir, listCurrentDirectory,
-                    switchToSystemDirUnder)
+                    traversePlatforms, traversePlatforms')
 import qualified Remove
 import Types
 import Versions
@@ -77,15 +74,16 @@ getSnapshotDirs mghcver = do
     versionMatch ghcver =
       showVersion ghcver ++ if isMajorVersion ghcver then ".*" else ""
 
-sizeSnapshots :: Bool -> IO ()
-sizeSnapshots nothuman = do
-  snapshots <- getStackSubdir "snapshots"
-  cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", snapshots]
+sizeSnapshots :: Bool -> Maybe String -> IO ()
+sizeSnapshots nothuman msystem =
+  traversePlatforms' (getStackSubdir "snapshots") msystem $ \plat ->
+  cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", plat]
 
-listGhcSnapshots :: Maybe Version -> IO ()
-listGhcSnapshots mghcver = do
-  ghcs <- getSnapshotDirs mghcver
-  mapM_ printTotalGhcSize ghcs
+listGhcSnapshots :: Maybe String -> Maybe Version -> FilePath -> IO ()
+listGhcSnapshots msystem mghcver dir = do
+  traversePlatforms (return dir) msystem $ do
+    ghcs <- getSnapshotDirs mghcver
+    mapM_ printTotalGhcSize ghcs
 
 plural :: String -> Int -> String
 plural thing n = show n ++ " " ++ thing ++ if n == 1 then "" else "s"
@@ -129,11 +127,11 @@ cleanMinorSnapshots deletion cwd mghcver = do
 
 cleanOldStackWork :: Deletion -> Natural -> Maybe String -> IO ()
 cleanOldStackWork deletion keep msystem = do
-  setStackWorkInstallDir msystem
-  dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
-  let ghcs = sortOn (readVersion . takeFileName . head) $
-             groupOn takeFileName dirs
-  mapM_ removeOlder ghcs
+  traversePlatforms (return stackWorkInstall) msystem $ do
+    dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
+    let ghcs = sortOn (readVersion . takeFileName . head) $
+               groupOn takeFileName dirs
+    mapM_ removeOlder ghcs
   where
     removeOlder :: [FilePath] -> IO ()
     removeOlder dirs = do
@@ -166,14 +164,6 @@ printTotalGhcSize :: VersionSnapshots -> IO ()
 printTotalGhcSize versnaps = do
   total <- head . words . last <$> cmdLines "du" ("-shc":snapsHashes versnaps)
   printf "%4s  %-6s (%d dirs)\n" total ((showVersion . snapsVersion) versnaps) (length (snapsHashes versnaps))
-
-setStackWorkInstallDir :: Maybe String -> IO ()
-setStackWorkInstallDir msystem = do
-  switchToSystemDirUnder msystem stackWorkInstall
-
-setStackSnapshotsDir :: Maybe String -> IO ()
-setStackSnapshotsDir msystem = do
-  getStackSubdir "snapshots" >>= switchToSystemDirUnder msystem
 
 removeStackWork :: Deletion -> IO ()
 removeStackWork deletion = do
