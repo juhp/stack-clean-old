@@ -68,14 +68,18 @@ removeGhcMinorTarball :: Deletion -> Maybe Version -> Maybe String
 removeGhcMinorTarball deletion mghcver msystem = do
   traversePlatforms getStackProgramsDir msystem $ do
     files <- getGhcTarballs (majorVersion <$> mghcver)
-    case mghcver of
-      Nothing -> do
-        let majors = groupOn (majorVersion . ghcTarballVersion) files
-        forM_ majors $ \ minors ->
-          forM_ (init minors) $ doRemoveGhcTarballVersion deletion
-      Just ghcver -> do
-        let minors = filter ((< ghcver) . ghcTarballVersion) files
-        forM_ minors $ doRemoveGhcTarballVersion deletion
+    unless (null files) $
+      case mghcver of
+        Nothing -> do
+          let majors = groupOn (majorVersion . ghcTarballVersion) files
+          forM_ majors $ \ minors ->
+            forM_ (init minors) $ doRemoveGhcTarballVersion deletion
+        Just ghcver -> do
+          let minors =
+                if isMajorVersion ghcver
+                then init files
+                else filter ((< ghcver) . ghcTarballVersion) files
+          forM_ minors $ doRemoveGhcTarballVersion deletion
 
 doRemoveGhcTarballVersion :: Deletion -> FilePath -> IO ()
 doRemoveGhcTarballVersion deletion ghctarball = do

@@ -75,14 +75,18 @@ removeGhcMinorInstallation :: Deletion -> Maybe Version -> Maybe String
 removeGhcMinorInstallation deletion mghcver msystem = do
   traversePlatforms getStackProgramsDir msystem $ do
     dirs <- getGhcInstallDirs (majorVersion <$> mghcver)
-    case mghcver of
-      Nothing -> do
-        let majors = groupOn (majorVersion . ghcInstallVersion) dirs
-        forM_ majors $ \ minors ->
-          forM_ (init minors) $ doRemoveGhcVersion deletion
-      Just ghcver -> do
-        let minors = filter ((< ghcver) . ghcInstallVersion) dirs
-        forM_ minors $ doRemoveGhcVersion deletion
+    unless (null dirs) $
+      case mghcver of
+        Nothing -> do
+          let majors = groupOn (majorVersion . ghcInstallVersion) dirs
+          forM_ majors $ \ minors ->
+            forM_ (init minors) $ doRemoveGhcVersion deletion
+        Just ghcver -> do
+          let minors =
+                if isMajorVersion ghcver
+                then init dirs
+                else filter ((< ghcver) . ghcInstallVersion) dirs
+          forM_ minors $ doRemoveGhcVersion deletion
 
 doRemoveGhcVersion :: Deletion -> FilePath -> IO ()
 doRemoveGhcVersion deletion ghcinst = do
