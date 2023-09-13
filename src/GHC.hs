@@ -11,6 +11,7 @@ import Data.Char (isDigit)
 import Data.List.Extra
 import Data.Version.Extra
 import SimpleCmd
+import SimplePrompt (yesNo)
 import System.FilePath
 
 import Directories (getStackSubdir, globDirs, traversePlatforms)
@@ -61,13 +62,17 @@ removeGhcVersionInstallation deletion ghcver msystem = do
   traversePlatforms getStackProgramsDir msystem $ do
     installs <- getGhcInstallDirs (Just ghcver)
     case installs of
-      [] -> putStrLn $ "stack ghc compiler version " ++ showVersion ghcver ++ " not found"
+      [] -> putStrLn $ "stack ghc compiler version" +-+ showVersion ghcver +-+ "not found"
       [g] | not (isMajorVersion ghcver) -> doRemoveGhcVersion deletion g
       gs ->
         if isMajorVersion ghcver
         then do
-          Remove.prompt deletion ("all stack ghc " ++ showVersion ghcver ++ " installations: ")
-          mapM_ (doRemoveGhcVersion deletion) gs
+          yes <-
+            if isDelete deletion then
+              yesNo $ "Delete all stack ghc" +-+ showVersion ghcver +-+ "installations"
+              else return True
+          when yes $
+            mapM_ (doRemoveGhcVersion deletion) gs
         else error' "more than one match found!!"
 
 removeGhcMinorInstallation :: Deletion -> Maybe Version -> Maybe String
@@ -92,4 +97,4 @@ doRemoveGhcVersion :: Deletion -> FilePath -> IO ()
 doRemoveGhcVersion deletion ghcinst = do
   Remove.doRemoveDirectory deletion ghcinst
   Remove.removeFile deletion (ghcinst <.> "installed")
-  putStrLn $ ghcinst ++ " compiler " ++ (if isDelete deletion then "" else "would be ") ++ "removed"
+  putStrLn $ ghcinst +-+ "compiler" +-+ (if isDelete deletion then "" else "would be") +-+ "removed"

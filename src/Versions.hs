@@ -5,6 +5,7 @@ module Versions (
 where
 
 import Data.Version
+import SimpleCmd ((+-+))
 
 majorVersion :: Version -> Version
 majorVersion ver =
@@ -12,7 +13,7 @@ majorVersion ver =
     case length vernums of
       2 -> ver
       3 -> (makeVersion . init) vernums
-      _ -> error $ "Bad ghc version " ++ showVersion ver
+      _ -> error $ "Bad ghc version" +-+ showVersion ver
 
 isMajorVersion :: Version -> Bool
 isMajorVersion ver =

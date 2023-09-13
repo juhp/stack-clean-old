@@ -10,6 +10,7 @@ import Data.Char (isDigit)
 import Data.List.Extra
 import Data.Version.Extra
 import SimpleCmd
+import SimplePrompt (yesNo)
 import System.FilePath (dropExtension)
 import System.FilePath.Glob
 
@@ -56,11 +57,17 @@ removeGhcVersionTarball deletion ghcver msystem = do
   traversePlatforms getStackProgramsDir msystem $ do
     files <- getGhcTarballs (Just ghcver)
     case files of
-      [] -> putStrLn $ "Tarball for " ++ showVersion ghcver ++ " not found"
+      [] -> putStrLn $ "Tarball for" +-+ showVersion ghcver +-+ "not found"
       [g] | not (isMajorVersion ghcver) -> doRemoveGhcTarballVersion deletion g
-      gs -> if isMajorVersion ghcver then do
-        Remove.prompt deletion ("all stack ghc " ++ showVersion ghcver ++ " tarballs: ")
-        mapM_ (doRemoveGhcTarballVersion deletion) gs
+      gs ->
+        if isMajorVersion ghcver
+        then do
+          yes <-
+            if isDelete deletion then
+              yesNo $ "Delete all stack ghc" +-+ showVersion ghcver +-+ "tarballs"
+              else return True
+          when yes $
+            mapM_ (doRemoveGhcTarballVersion deletion) gs
         else error' "more than one match found!!"
 
 removeGhcMinorTarball :: Deletion -> Maybe Version -> Maybe String
@@ -84,4 +91,4 @@ removeGhcMinorTarball deletion mghcver msystem = do
 doRemoveGhcTarballVersion :: Deletion -> FilePath -> IO ()
 doRemoveGhcTarballVersion deletion ghctarball = do
   Remove.removeFile deletion ghctarball
-  putStrLn $ ghctarball ++ " tarball " ++ (if isDelete deletion then "" else "would be ") ++ "removed"
+  putStrLn $ ghctarball +-+ "tarball" +-+ (if isDelete deletion then "" else "would be") +-+ "removed"

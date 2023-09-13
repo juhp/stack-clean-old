@@ -20,6 +20,7 @@ import SimpleCmd
 #if MIN_VERSION_simple_cmd(0,2,1)
   hiding (whenM)
 #endif
+import SimplePrompt (yesNo)
 import System.Directory hiding (removeDirectoryRecursive, removeFile)
 import System.FilePath
 import Text.Printf
@@ -87,14 +88,14 @@ listGhcSnapshots msystem mghcver dir = do
     mapM_ printTotalGhcSize ghcs
 
 plural :: String -> Int -> String
-plural thing n = show n ++ " " ++ thing ++ if n == 1 then "" else "s"
+plural thing n = show n +-+ thing ++ if n == 1 then "" else "s"
 
 removeVersionSnaps :: Deletion -> FilePath -> VersionSnapshots -> IO ()
 removeVersionSnaps deletion cwd versnap = do
   let dirs = snapsHashes versnap
   dir <- getCurrentDirectory
   home <- getHomeDirectory
-  putStrLn $ plural "dir" (length dirs) ++ " in " ++ renderDir home dir ++ " " ++ (if isDelete deletion then "" else "would be ") ++ "removed for " ++ showVersion (snapsVersion versnap)
+  putStrLn $ plural "dir" (length dirs) +-+ "in" +-+ renderDir home dir </> "*" </> showVersion (snapsVersion versnap) +-+ (if isDelete deletion then "" else "would be") +-+ "removed"
   mapM_ (Remove.doRemoveDirectory deletion) dirs
   where
     renderDir :: FilePath -> FilePath -> FilePath
@@ -109,9 +110,12 @@ cleanGhcSnapshots deletion cwd ghcver platform = do
     ghcs <- getSnapshotDirs (Just ghcver)
     unless (null ghcs) $
       putStrLn (platform ++ ":")
-    when (isMajorVersion ghcver) $ do
-      Remove.prompt deletion ("all " ++ showVersion ghcver ++ " builds")
-    mapM_ (removeVersionSnaps deletion cwd) ghcs
+    yes <-
+      if isMajorVersion ghcver && isDelete deletion
+      then yesNo $ "Delete all" +-+ showVersion ghcver +-+ "builds"
+      else return True
+    when yes $
+      mapM_ (removeVersionSnaps deletion cwd) ghcs
 
 cleanMinorSnapshots :: Deletion -> FilePath -> Maybe Version -> String -> IO ()
 cleanMinorSnapshots deletion cwd mghcver platform = do
@@ -148,7 +152,7 @@ cleanOldStackWork deletion keep msystem = do
       oldfiles <- drop (fromEnum keep) . reverse <$> sortedByAge
       mapM_ (Remove.doRemoveDirectory deletion . takeDirectory) oldfiles
       unless (null oldfiles) $
-        putStrLn $ plural "dir" (length oldfiles) ++ (if isDelete deletion then "" else " would be") ++ " removed for " ++ ghcver
+        putStrLn $ plural "dir" (length oldfiles) +-+ (if isDelete deletion then "" else "would be") +-+ "removed for" +-+ ghcver
       where
         sortedByAge = do
           fileTimes <- mapM newestTimeStamp dirs
@@ -176,5 +180,9 @@ printTotalGhcSize versnaps = do
 
 removeStackWork :: Deletion -> IO ()
 removeStackWork deletion = do
-  Remove.prompt deletion ".stack-work"
-  Remove.doRemoveDirectory deletion ".stack-work"
+  yes <-
+    if isDelete deletion
+    then yesNo "Delete .stack-work"
+    else return True
+  when yes $
+    Remove.doRemoveDirectory deletion ".stack-work"

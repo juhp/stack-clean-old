@@ -12,7 +12,7 @@ where
 
 import Control.Monad (forM_, unless, when)
 import Data.List.Extra
-import SimpleCmd (
+import SimpleCmd ((+-+),
 #if MIN_VERSION_simple_cmd(0,2,0)
                   warning
 #endif
@@ -36,7 +36,7 @@ getStackRootDir = do
   case mroot of
     Just path -> do
       unless (isAbsolute path) $
-        warning $ "STACK_ROOT is not absolute: " ++ path
+        warning $ "STACK_ROOT is not absolute:" +-+ path
       return path
     Nothing -> do
       home <- getHomeDirectory
@@ -78,7 +78,7 @@ listPlatforms msystem = do
       if s `elem` platforms
       then return [s]
       else do
-        warning $ "no matching platform for: " ++ s
+        warning $ "no matching platform for:" +-+ s
         return []
 
 listCurrentDirectory :: IO [FilePath]

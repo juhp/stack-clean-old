@@ -77,10 +77,10 @@ main = do
   where
     modeOpt stackroot =
       flagWith' Project 'P' "project" "Act on current project's .stack-work/ [default in project dir]" <|>
-      flagWith' Snapshots 'S' "snapshots" ("Act on " ++ stackroot </> "snapshots/") <|>
-      flagWith' Compilers 'C' "compilers" ("Act on " ++ stackroot </> "programs/ installations") <|>
-      flagWith' Tarballs 'T' "tarballs" ("Act on " ++ stackroot </> "programs/ tarballs") <|>
-      flagWith Default Global 'G' "global" ("Act on both " ++ stackroot </> "{programs,snapshots}/ [default outside project dir]")
+      flagWith' Snapshots 'S' "snapshots" ("Act on" +-+ stackroot </> "snapshots/") <|>
+      flagWith' Compilers 'C' "compilers" ("Act on" +-+ stackroot </> "programs/ installations") <|>
+      flagWith' Tarballs 'T' "tarballs" ("Act on" +-+ stackroot </> "programs/ tarballs") <|>
+      flagWith Default Global 'G' "global" ("Act on both" +-+ stackroot </> "{programs,snapshots}/ [default outside project dir]")
 
     deleteOpt = flagWith Dryrun Delete 'd' "delete" "Do deletion [default is dryrun]"
 
