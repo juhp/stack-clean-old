@@ -25,7 +25,7 @@ import Paths_stack_clean_old (version)
 import Snapshots
 import Types
 
-data Mode = Default | Project | Snapshots | Compilers | GHC | Tarballs
+data Mode = Default | Project | Snapshots | Compilers | Global | Tarballs
 
 data Recursion = Subdirs | Recursive
   deriving Eq
@@ -80,7 +80,7 @@ main = do
       flagWith' Snapshots 'S' "snapshots" ("Act on " ++ stackroot </> "snapshots/") <|>
       flagWith' Compilers 'C' "compilers" ("Act on " ++ stackroot </> "programs/ installations") <|>
       flagWith' Tarballs 'T' "tarballs" ("Act on " ++ stackroot </> "programs/ tarballs") <|>
-      flagWith Default GHC 'G' "global" ("Act on both " ++ stackroot </> "{programs,snapshots}/ [default outside project dir]")
+      flagWith Default Global 'G' "global" ("Act on both " ++ stackroot </> "{programs,snapshots}/ [default outside project dir]")
 
     deleteOpt = flagWith Dryrun Delete 'd' "delete" "Do deletion [default is dryrun]"
 
@@ -130,14 +130,14 @@ sizeCmd mode mrecursion notHuman msystem =
     Snapshots -> sizeSnapshots notHuman msystem
     Compilers -> sizeGhcPrograms notHuman
     Tarballs -> error' "use --compilers"
-    GHC -> do
+    Global -> do
       sizeCmd Snapshots Nothing notHuman msystem
       sizeCmd Compilers Nothing notHuman msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject || isJust mrecursion
         then sizeCmd Project mrecursion notHuman msystem
-        else sizeCmd GHC Nothing notHuman msystem
+        else sizeCmd Global Nothing notHuman msystem
 
 listCmd :: Mode -> Maybe Recursion -> Maybe Version -> Maybe String -> IO ()
 listCmd mode mrecursion mver msystem =
@@ -147,14 +147,14 @@ listCmd mode mrecursion mver msystem =
     Snapshots -> getStackSubdir "snapshots" >>= listGhcSnapshots msystem mver
     Compilers -> listGhcInstallation mver msystem
     Tarballs -> listGhcTarballs mver msystem
-    GHC -> do
+    Global -> do
       listCmd Snapshots Nothing mver msystem
       listCmd Compilers Nothing mver msystem
     Default -> do
       isProject <- doesDirectoryExist ".stack-work"
       if isProject
         then listCmd Project Nothing mver msystem
-        else listCmd GHC Nothing mver msystem
+        else listCmd Global Nothing mver msystem
 
 removeCmd :: Deletion -> Mode -> Maybe Recursion -> Version -> Maybe String
           -> IO ()
@@ -179,14 +179,14 @@ removeRun deletion mode mrecursion ghcver msystem =
         removeGhcVersionInstallation deletion ghcver msystem
       Tarballs -> do
         removeGhcVersionTarball deletion ghcver msystem
-      GHC -> do
+      Global -> do
         removeRun deletion Compilers Nothing ghcver msystem
         removeRun deletion Snapshots Nothing ghcver msystem
       Default -> do
         isProject <- doesDirectoryExist ".stack-work"
         if isProject
           then removeRun deletion Project Nothing ghcver msystem
-          else removeRun deletion GHC Nothing ghcver msystem
+          else removeRun deletion Global Nothing ghcver msystem
 
 removeMinorsCmd :: Deletion -> Mode -> Maybe Recursion -> Maybe Version
                 -> Maybe String -> IO ()
@@ -209,14 +209,14 @@ removeMinorsRun deletion mode mrecursion mver msystem = do
           cleanMinorSnapshots deletion cwd mver
       Compilers -> removeGhcMinorInstallation deletion mver msystem
       Tarballs -> removeGhcMinorTarball deletion mver msystem
-      GHC -> do
+      Global -> do
         removeMinorsRun deletion Compilers Nothing mver msystem
         removeMinorsRun deletion Snapshots Nothing mver msystem
       Default -> do
         isProject <- doesDirectoryExist ".stack-work"
         if isProject
           then removeMinorsRun deletion Project Nothing mver msystem
-          else removeMinorsRun deletion GHC Nothing mver msystem
+          else removeMinorsRun deletion Global Nothing mver msystem
 
 purgeOlderCmd :: Deletion -> Natural -> Maybe Recursion -> Maybe String -> IO ()
 purgeOlderCmd deletion keep mrecursion msystem = do
