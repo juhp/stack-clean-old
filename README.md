@@ -36,13 +36,12 @@ Subcommands:
 `delete-work`:
     removes `.stack-work` directories completely
 
-Since version 0.4 dry-run mode is now the default and one needs to use
-`--delete` (`-d`) for actual deletion of files,
-after checking the dry-run output first.
+dry-run mode is used by default and one should use `--delete` (`-d`)
+for actual deletion of files, after checking the dry-run output.
 
 If you should remove any needed snapshot builds,
 then they will get rebuilt again by stack next time you build any projects
-using them, so removals should be done carefully
+needing them, so removals should be done carefully
 but can recover a lot of diskspace.
 
 Further the commands can use `--subdirs` or `--recursive` to run over
@@ -58,9 +57,9 @@ otherwise they are each listed by default.
 List a project's builds:
 ```ShellSession
 $ stack-clean-old list
-154M  9.2.8  (5 dirs)
-154M  9.4.5  (5 dirs)
-163M  9.6.2  (5 dirs)
+149M  9.2.8  (5 dirs)
+163M  9.4.7  (5 dirs)
+155M  9.6.2  (5 dirs)
 ```
 Remove project's 9.0.2 builds:
 ```ShellSession
@@ -69,20 +68,31 @@ $ stack-clean-old remove --delete --project 9.0.2
 ```
 (--project is optional in a project dir).
 
-Remove stack ghc-9.4 snapshot builds and minor compilers before 9.4.4:
+Remove stack ghc-9.4 snapshot builds and minor compilers before 9.4.7:
 ```ShellSession
 $ stack-clean-old list --global 9.4
-421M  9.4.1  (7 dirs)
-368M  9.4.2  (6 dirs)
-489M  9.4.3  (8 dirs)
-799M  9.4.4  (24 dirs)
-$ stack-clean-old keep-minor -d -g 9.4.4
-ghc-tinfo6-9.4.3 removed
-7 dirs removed for 9.4.1
-6 dirs removed for 9.4.2
-8 dirs removed for 9.4.3
+x86_64-linux-tinfo6:
+1.8G  9.4.6  (61 dirs)
+279M  9.4.7  (6 dirs)
+x86_64-linux:
+ghc-tinfo6-9.4.6
+ghc-tinfo6-9.4.7
+$ stack-clean-old keep-minor --global 9.4
+ghc-tinfo6-9.4.6 compiler would be removed
+x86_64-linux-tinfo6:
+61 dirs in ~/.stack/snapshots/x86_64-linux-tinfo6/*/9.4.6 would be removed
+
+(use --delete (-d) for removal)
+$ stack-clean-old keep-minor --global 9.4 -d
+ghc-tinfo6-9.4.6 compiler removed
+x86_64-linux-tinfo6:
+61 dirs in ~/.stack/snapshots/x86_64-linux-tinfo6/*/9.4.6 removed
 ```
 (--global is optional outside a project dir).
+
+If you have different latest minor versions for compilers and snapshots
+you may prefer to specify the latest minor version to keep
+to get more certain behaviour.
 
 ### Purging older stack project builds
 ```
@@ -106,7 +116,7 @@ space (seems same as `stack clean --full` inside a project).
 To get help you can run `stack-clean-old --help` or just:
 ```ShellSession
 $ stack-clean-old --version
-0.4.8
+0.5
 $ stack-clean-old
 Stack clean up tool
 
@@ -135,7 +145,7 @@ Most of the commands have similar options, e.g.:
 
 ```shellsession
 $ stack-clean-old remove --help
-Usage: stack-clean-old remove [-d|--delete]
+Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]]
                               [(-P|--project) | (-S|--snapshots) |
                                 (-C|--compilers) | (-T|--tarballs) |
                                 (-G|--global)]
@@ -146,6 +156,7 @@ Usage: stack-clean-old remove [-d|--delete]
 
 Available options:
   -d,--delete              Do deletion [default is dryrun]
+  -y,--yes                 Assume yes for all prompts
   -P,--project             Act on current project's .stack-work/ [default in
                            project dir]
   -S,--snapshots           Act on ~/.stack/snapshots/
@@ -161,7 +172,7 @@ Available options:
   -h,--help                Show this help text
 ```
 
-(The `list` and `size` commands don't have `--delete`.)
+(The `list` and `size` commands don't have `--delete` and `--yes`.)
 
 ## Installation
 

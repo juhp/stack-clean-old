@@ -1,5 +1,10 @@
 # Release history for stack-clean-old
 
+## 0.5 (2023-09-13)
+- simpler dry run output and use simple-prompt yesNo
+- add --yes option for --delete
+- keep-minor: fix ghc minor version checks with major version
+
 ## 0.4.8 (2023-08-26)
 - support the `STACK_ROOT` environment variable which overrides
   the default Stack root (`~/.stack`) by @PRESFIL (#12)
