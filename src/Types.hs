@@ -1,11 +1,16 @@
 module Types (
   Deletion (..),
-  isDelete
+  isDelete,
+  deletePrompt
   )
 where
 
-data Deletion = Dryrun | Delete
-  deriving Eq
+data Deletion = Dryrun | Delete Bool
 
 isDelete :: Deletion -> Bool
-isDelete = (== Delete)
+isDelete (Delete _) = True
+isDelete Dryrun = False
+
+deletePrompt :: Deletion -> Bool
+deletePrompt (Delete False) = True
+deletePrompt _ = False

@@ -82,7 +82,10 @@ main = do
       flagWith' Tarballs 'T' "tarballs" ("Act on" +-+ stackroot </> "programs/ tarballs") <|>
       flagWith Default Global 'G' "global" ("Act on both" +-+ stackroot </> "{programs,snapshots}/ [default outside project dir]")
 
-    deleteOpt = flagWith Dryrun Delete 'd' "delete" "Do deletion [default is dryrun]"
+    deleteOpt =
+      (flagWith' Delete 'd' "delete" "Do deletion [default is dryrun]" <*>
+      switchWith 'y' "yes" "Assume yes for all prompts") <|>
+      pure Dryrun
 
     recursionOpt =
       optional (

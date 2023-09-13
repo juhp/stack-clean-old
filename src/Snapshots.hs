@@ -111,7 +111,7 @@ cleanGhcSnapshots deletion cwd ghcver platform = do
     unless (null ghcs) $
       putStrLn (platform ++ ":")
     yes <-
-      if isMajorVersion ghcver && isDelete deletion
+      if isMajorVersion ghcver && deletePrompt deletion
       then yesNo $ "Delete all" +-+ showVersion ghcver +-+ "builds"
       else return True
     when yes $
@@ -181,7 +181,7 @@ printTotalGhcSize versnaps = do
 removeStackWork :: Deletion -> IO ()
 removeStackWork deletion = do
   yes <-
-    if isDelete deletion
+    if deletePrompt deletion
     then yesNo "Delete .stack-work"
     else return True
   when yes $

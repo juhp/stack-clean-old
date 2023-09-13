@@ -68,9 +68,9 @@ removeGhcVersionInstallation deletion ghcver msystem = do
         if isMajorVersion ghcver
         then do
           yes <-
-            if isDelete deletion then
-              yesNo $ "Delete all stack ghc" +-+ showVersion ghcver +-+ "installations"
-              else return True
+            if deletePrompt deletion
+            then yesNo $ "Delete all stack ghc" +-+ showVersion ghcver +-+ "installations"
+            else return True
           when yes $
             mapM_ (doRemoveGhcVersion deletion) gs
         else error' "more than one match found!!"
