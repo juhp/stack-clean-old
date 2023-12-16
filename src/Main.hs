@@ -240,7 +240,7 @@ findStackWorks =
 
 listStackSubdirs :: IO [FilePath]
 listStackSubdirs =
-  listDirectory "." >>= filterM (doesDirectoryExist . (</> ".stack-work")) . L.sort
+  listDirectory "." >>= fmap L.sort . filterM (doesDirectoryExist . (</> ".stack-work"))
 
 remindDelete :: Deletion -> IO ()
 remindDelete deletion =
