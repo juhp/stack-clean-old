@@ -1,5 +1,10 @@
 # Release history for stack-clean-old
 
+## 0.5.1 (2023-12-17)
+- listStackSubdirs: sort after filtering
+- Directory: ignore non-directories, like .DS_Store files (#19,
+  thanks to @0rphee for reporting #18)
+
 ## 0.5 (2023-09-13)
 - simpler dry run output and use simple-prompt yesNo
 - add --yes option for --delete
