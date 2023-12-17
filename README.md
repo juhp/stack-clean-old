@@ -4,9 +4,8 @@ A small tool to clean away older Haskell [stack](https://docs.haskellstack.org)
 snapshot builds and ghc versions to recover diskspace.
 
 ## Usage
-```
-stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)|(-C|--compilers)|(-T|--tarballs)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]`
-```
+stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)|(-C|--compilers)|(-T|--tarballs)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]
+
 In a project directory it acts on `.stack-work/install/` by default,
 otherwise on `${STACK_ROOT}/{snapshots,programs}/`
 (the default *Stack root* is `~/.stack/`):
@@ -114,11 +113,12 @@ space (seems same as `stack clean --full` inside a project).
 ## Help output
 (Note you can also run this tool via `stack clean-old`.)
 
-To get help you can run `stack-clean-old --help` or just:
 `$ stack-clean-old --version`
 ```
 0.5
 ```
+To get help you can run `stack-clean-old` or:
+
 `$ stack-clean-old --help`
 ```
 Stack clean up tool
@@ -148,11 +148,11 @@ Most of the commands have similar options, e.g.:
 
 `$ stack-clean-old remove --help`
 ```
-Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]] 
-                              [(-P|--project) | (-S|--snapshots) | 
-                                (-C|--compilers) | (-T|--tarballs) | 
-                                (-G|--global)] 
-                              [(-s|--subdirs) | (-r|--recursive)] GHCVER 
+Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]]
+                              [(-P|--project) | (-S|--snapshots) |
+                                (-C|--compilers) | (-T|--tarballs) |
+                                (-G|--global)]
+                              [(-s|--subdirs) | (-r|--recursive)] GHCVER
                               [-o|--platform SYSTEM]
 
   Remove for a ghc version
