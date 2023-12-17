@@ -83,7 +83,7 @@ listPlatforms msystem = do
 
 listCurrentDirectory :: IO [FilePath]
 listCurrentDirectory =
-  filter (\d -> head d /= '.') <$> listDirectory "." >>= filterM doesDirectoryExist
+  listDirectory "." >>= filterM doesDirectoryExist . filter (\d -> head d /= '.')
 
 #if !MIN_VERSION_simple_cmd(0,2,0)
 warning :: String -> IO ()
