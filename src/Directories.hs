@@ -10,7 +10,7 @@ module Directories (
   )
 where
 
-import Control.Monad (forM_, unless, when)
+import Control.Monad (filterM, forM_, unless, when)
 import Data.List.Extra
 import SimpleCmd ((+-+),
 #if MIN_VERSION_simple_cmd(0,2,0)
@@ -71,7 +71,7 @@ traversePlatforms' getdir msystem act = do
 
 listPlatforms :: Maybe String -> IO [FilePath]
 listPlatforms msystem = do
-  platforms <- listDirectory "."
+  platforms <- listDirectory "." >>= filterM doesDirectoryExist
   case msystem of
     Nothing -> return platforms
     Just s ->
@@ -83,7 +83,7 @@ listPlatforms msystem = do
 
 listCurrentDirectory :: IO [FilePath]
 listCurrentDirectory =
-  filter (\d -> head d /= '.') <$> listDirectory "."
+  filter (\d -> head d /= '.') <$> listDirectory "." >>= filterM doesDirectoryExist
 
 #if !MIN_VERSION_simple_cmd(0,2,0)
 warning :: String -> IO ()
