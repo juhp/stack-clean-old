@@ -176,12 +176,14 @@ printTotalGhcSize versnaps = do
 
 removeStackWork :: Deletion -> IO ()
 removeStackWork deletion = do
-  yes <-
-    if deletePrompt deletion
-    then yesNo "Delete .stack-work"
-    else return True
-  when yes $
-    Remove.doRemoveDirectory deletion ".stack-work"
+  exists <- doesDirectoryExist ".stack-work"
+  when exists $ do
+    yes <-
+      if deletePrompt deletion
+      then yesNo "Delete .stack-work"
+      else return True
+    when yes $
+      Remove.doRemoveDirectory deletion ".stack-work"
 
 #if !MIN_VERSION_extra(1,7,11)
 groupOnKey :: Eq k => (a -> k) -> [a] -> [(k, [a])]
