@@ -171,7 +171,7 @@ sizeStackWork nothuman dir = do
 
 printTotalGhcSize :: VersionSnapshots -> IO ()
 printTotalGhcSize versnaps = do
-  total <- head . words . last <$> cmdLines "du" ("-shc":snapsHashes versnaps)
+  total <- fst . word1 . last <$> cmdLines "du" ("-shc":snapsHashes versnaps)
   printf "%4s  %-6s (%d dirs)\n" total ((showVersion . snapsVersion) versnaps) (length (snapsHashes versnaps))
 
 removeStackWork :: Deletion -> IO ()
