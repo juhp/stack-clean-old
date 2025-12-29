@@ -2,7 +2,8 @@
 
 ## 0.5.2 (2025-12-28)
 - 'delete-work' now provides output
-- some safe refactorings
+- some safe refactorings (helps with #21 reported by @andreasabel)
+- support `$STACK_WORK` (#20 suggested by @JonnyRa)
 
 ## 0.5.1 (2023-12-17)
 - listStackSubdirs: sort after filtering

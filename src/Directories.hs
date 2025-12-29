@@ -3,6 +3,8 @@
 module Directories (
   getStackSubdir,
   getStackProgramsDir,
+  getStackWorkDir,
+  getStackWorkInstall,
   globDirs,
   traversePlatforms,
   traversePlatforms',
@@ -12,6 +14,7 @@ where
 
 import Control.Monad (filterM, forM_, unless, when)
 import Data.List.Extra
+import Data.Maybe (fromMaybe)
 import Safe (headMay)
 import SimpleCmd ((+-+),
 #if MIN_VERSION_simple_cmd(0,2,0)
@@ -51,6 +54,16 @@ getStackSubdir :: FilePath -> IO FilePath
 getStackSubdir subdir = do
   stackRoot <- getStackRootDir
   return $ stackRoot </> subdir
+
+getStackWorkDir :: IO FilePath
+getStackWorkDir = do
+  mwork <- lookupEnv "STACK_WORK"
+  return $ fromMaybe ".stack-work" mwork
+
+getStackWorkInstall :: IO FilePath
+getStackWorkInstall = do
+  stackwork <- getStackWorkDir
+  return $ stackwork </> "install"
 
 traversePlatforms :: IO FilePath -> Maybe String -> IO () -> IO ()
 traversePlatforms getdir msystem act = do

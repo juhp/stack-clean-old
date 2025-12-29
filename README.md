@@ -6,8 +6,9 @@ snapshot builds and ghc versions to recover diskspace.
 ## Usage
 stack-clean-old [size|list|remove|keep-minor|purge-older|delete-work] [(-P|--project)|(-G|--global)|(-C|--compilers)|(-T|--tarballs)] [(-s|--subdirs)|(-r|--recursive)] [-d|--delete] [GHCVER]
 
-In a project directory it acts on `.stack-work/install/` by default,
-otherwise on `${STACK_ROOT}/{snapshots,programs}/`
+In a project directory it acts on `.stack-work/install/` by default
+(or `$STACK_WORK/install` if defined).
+Otherwise on `${STACK_ROOT}/{snapshots,programs}/`
 (the default *Stack root* is `~/.stack/`):
 see the [Stack root documentation](https://docs.haskellstack.org/en/stable/stack_root/).
 
@@ -151,11 +152,11 @@ Most of the commands have similar options, e.g.:
 `$ stack-clean-old remove --help`
 
 ```
-Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]]
-                              [(-P|--project) | (-S|--snapshots) |
-                                (-C|--compilers) | (-T|--tarballs) |
-                                (-G|--global)]
-                              [(-s|--subdirs) | (-r|--recursive)] GHCVER
+Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]] 
+                              [(-P|--project) | (-S|--snapshots) | 
+                                (-C|--compilers) | (-T|--tarballs) | 
+                                (-G|--global)] 
+                              [(-s|--subdirs) | (-r|--recursive)] GHCVER 
                               [-o|--platform SYSTEM]
 
   Remove for a ghc version
@@ -163,7 +164,7 @@ Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]]
 Available options:
   -d,--delete              Do deletion [default is dryrun]
   -y,--yes                 Assume yes for all prompts
-  -P,--project             Act on current project's .stack-work/ [default in
+  -P,--project             Act on current project's .stack-work [default in
                            project dir]
   -S,--snapshots           Act on ~/.stack/snapshots/
   -C,--compilers           Act on ~/.stack/programs/ installations

@@ -5,7 +5,6 @@ module Snapshots (
   cleanMinorSnapshots,
   cleanOldStackWork,
   listGhcSnapshots,
-  stackWorkInstall,
   sizeSnapshots,
   sizeStackWork,
   removeStackWork
@@ -26,7 +25,8 @@ import System.Directory hiding (removeDirectoryRecursive, removeFile)
 import System.FilePath
 import Text.Printf
 
-import Directories (globDirs, getStackSubdir, listCurrentDirectory,
+import Directories (globDirs, getStackSubdir, getStackWorkDir,
+                    getStackWorkInstall, listCurrentDirectory,
                     traversePlatforms, traversePlatforms')
 import qualified Remove
 import Types
@@ -137,7 +137,7 @@ cleanMinorSnapshots deletion cwd mghcver platform = do
 
 cleanOldStackWork :: Deletion -> Natural -> Maybe String -> IO ()
 cleanOldStackWork deletion keep msystem = do
-  traversePlatforms (return stackWorkInstall) msystem $ do
+  traversePlatforms getStackWorkInstall msystem $ do
     dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
     let ghcs = sortOn (readVersion . fst) $
                groupOnKey takeFileName dirs
@@ -160,12 +160,10 @@ cleanOldStackWork deletion keep msystem = do
             timestamp <- maximum <$> mapM getModificationTime files
             return (dir, timestamp)
 
-stackWorkInstall :: FilePath
-stackWorkInstall = ".stack-work/install"
-
 sizeStackWork :: Bool -> FilePath -> IO ()
 sizeStackWork nothuman dir = do
-  let path = dir </> ".stack-work"
+  stackwork <- getStackWorkDir
+  let path = dir </> stackwork
   whenM (doesDirectoryExist path) $
     cmd_ "du" $ ["-h" | not nothuman] ++ ["-s", path]
 

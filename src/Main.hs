@@ -18,7 +18,8 @@ import System.Environment (lookupEnv)
 import System.FilePath
 import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
-import Directories (getStackSubdir, traversePlatforms')
+import Directories (getStackSubdir, getStackWorkDir, getStackWorkInstall,
+                    traversePlatforms')
 import GHC
 import GHCTarball
 import Paths_stack_clean_old (version)
@@ -33,33 +34,34 @@ data Recursion = Subdirs | Recursive
 main :: IO ()
 main = do
   stackroot_str <- maybe "~/.stack" (const "$STACK_ROOT") <$> lookupEnv "STACK_ROOT"
+  stackwork_str <- maybe ".stack-work" (const "$STACK_WORK") <$> lookupEnv "STACK_WORK"
   hSetBuffering stdout NoBuffering
   simpleCmdArgs (Just version) "Stack clean up tool"
     "Cleans away old stack-work builds (and pending: stack snapshots) to recover diskspace. Use the --delete option to perform actual removals. https://github.com/juhp/stack-clean-old#readme" $
     subcommands
     [ Subcommand "size" "Total size" $
       sizeCmd
-      <$> modeOpt stackroot_str
+      <$> modeOpt stackroot_str stackwork_str
       <*> recursionOpt
       <*> notHumanOpt
       <*> optional systemOpt
     , Subcommand "list" "List sizes per ghc version" $
       listCmd
-      <$> modeOpt stackroot_str
+      <$> modeOpt stackroot_str stackwork_str
       <*> recursionOpt
       <*> optional ghcVerArg
       <*> optional systemOpt
     , Subcommand "remove" "Remove for a ghc version" $
       removeCmd
       <$> deleteOpt
-      <*> modeOpt stackroot_str
+      <*> modeOpt stackroot_str stackwork_str
       <*> recursionOpt
       <*> ghcVerArg
       <*> optional systemOpt
     , Subcommand "keep-minor" "Remove for previous ghc minor versions" $
       removeMinorsCmd
       <$> deleteOpt
-      <*> modeOpt stackroot_str
+      <*> modeOpt stackroot_str stackwork_str
       <*> recursionOpt
       <*> optional ghcVerArg
       <*> optional systemOpt
@@ -75,8 +77,8 @@ main = do
       <*> recursionOpt
     ]
   where
-    modeOpt stackroot =
-      flagWith' Project 'P' "project" "Act on current project's .stack-work/ [default in project dir]" <|>
+    modeOpt stackroot stackwork =
+      flagWith' Project 'P' "project" ("Act on current project's" +-+ stackwork +-+ "[default in project dir]") <|>
       flagWith' Snapshots 'S' "snapshots" ("Act on" +-+ stackroot </> "snapshots/") <|>
       flagWith' Compilers 'C' "compilers" ("Act on" +-+ stackroot </> "programs/ installations") <|>
       flagWith' Tarballs 'T' "tarballs" ("Act on" +-+ stackroot </> "programs/ tarballs") <|>
@@ -112,11 +114,12 @@ withRecursion' :: Bool -> Bool -> Maybe Recursion -> (FilePath -> IO ())
 withRecursion' changedir needinstall mrecursion act = do
   case mrecursion of
     Just recursion -> do
+      stackworkinstall <- getStackWorkInstall
       dirs <- (if recursion == Recursive
                then map (dropPrefix "./" . takeDirectory) <$> findStackWorks
                else listStackSubdirs)
               >>= if needinstall
-                  then filterM (doesDirectoryExist . (</> ".stack-work/install"))
+                  then filterM (doesDirectoryExist . (</> stackworkinstall))
                   else return
       forM_ dirs $ \dir ->
         if changedir
@@ -138,7 +141,7 @@ sizeCmd mode mrecursion notHuman msystem =
       sizeCmd Snapshots Nothing notHuman msystem
       sizeCmd Compilers Nothing notHuman msystem
     Default -> do
-      isProject <- doesDirectoryExist ".stack-work"
+      isProject <- getStackWorkDir >>= doesDirectoryExist
       if isProject || isJust mrecursion
         then sizeCmd Project mrecursion notHuman msystem
         else sizeCmd Global Nothing notHuman msystem
@@ -147,7 +150,7 @@ listCmd :: Mode -> Maybe Recursion -> Maybe Version -> Maybe String -> IO ()
 listCmd mode mrecursion mver msystem =
   withRecursion True mrecursion $
   case mode of
-    Project -> listGhcSnapshots msystem mver stackWorkInstall
+    Project -> getStackWorkInstall >>= listGhcSnapshots msystem mver
     Snapshots -> getStackSubdir "snapshots" >>= listGhcSnapshots msystem mver
     Compilers -> listGhcInstallation mver msystem
     Tarballs -> listGhcTarballs mver msystem
@@ -155,7 +158,7 @@ listCmd mode mrecursion mver msystem =
       listCmd Snapshots Nothing mver msystem
       listCmd Compilers Nothing mver msystem
     Default -> do
-      isProject <- doesDirectoryExist ".stack-work"
+      isProject <- getStackWorkDir >>= doesDirectoryExist
       if isProject
         then listCmd Project Nothing mver msystem
         else listCmd Global Nothing mver msystem
@@ -173,7 +176,7 @@ removeRun deletion mode mrecursion ghcver msystem =
     case mode of
       Project -> do
         cwd <- getCurrentDirectory
-        traversePlatforms' (return stackWorkInstall) msystem $
+        traversePlatforms' getStackWorkInstall msystem $
           cleanGhcSnapshots deletion cwd ghcver
       Snapshots -> do
         cwd <- getCurrentDirectory
@@ -187,7 +190,7 @@ removeRun deletion mode mrecursion ghcver msystem =
         removeRun deletion Compilers Nothing ghcver msystem
         removeRun deletion Snapshots Nothing ghcver msystem
       Default -> do
-        isProject <- doesDirectoryExist ".stack-work"
+        isProject <- getStackWorkDir >>= doesDirectoryExist
         if isProject
           then removeRun deletion Project Nothing ghcver msystem
           else removeRun deletion Global Nothing ghcver msystem
@@ -205,7 +208,7 @@ removeMinorsRun deletion mode mrecursion mver msystem = do
     case mode of
       Project -> do
         cwd <- getCurrentDirectory
-        traversePlatforms' (return stackWorkInstall) msystem $
+        traversePlatforms' getStackWorkInstall msystem $
           cleanMinorSnapshots deletion cwd mver
       Snapshots -> do
         cwd <- getCurrentDirectory
@@ -217,7 +220,7 @@ removeMinorsRun deletion mode mrecursion mver msystem = do
         removeMinorsRun deletion Compilers Nothing mver msystem
         removeMinorsRun deletion Snapshots Nothing mver msystem
       Default -> do
-        isProject <- doesDirectoryExist ".stack-work"
+        isProject <- getStackWorkDir >>= doesDirectoryExist
         if isProject
           then removeMinorsRun deletion Project Nothing mver msystem
           else removeMinorsRun deletion Global Nothing mver msystem
@@ -235,13 +238,15 @@ deleteWorkCmd deletion mrecursion = do
   remindDelete deletion
 
 findStackWorks :: IO [FilePath]
-findStackWorks =
+findStackWorks = do
+  stackwork <- getStackWorkDir
   -- ignore find errors (e.g. access rights)
-  L.sort . lines <$> cmdIgnoreErr "find" [".", "-type", "d", "-name", ".stack-work", "-prune"] []
+  L.sort . lines <$> cmdIgnoreErr "find" [".", "-type", "d", "-name", stackwork, "-prune"] []
 
 listStackSubdirs :: IO [FilePath]
-listStackSubdirs =
-  listDirectory "." >>= fmap L.sort . filterM (doesDirectoryExist . (</> ".stack-work"))
+listStackSubdirs = do
+  stackwork <- getStackWorkDir
+  listDirectory "." >>= fmap L.sort . filterM (doesDirectoryExist . (</> stackwork))
 
 remindDelete :: Deletion -> IO ()
 remindDelete deletion =
