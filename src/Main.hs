@@ -107,7 +107,8 @@ withRecursion :: Bool -> Maybe Recursion -> IO () -> IO ()
 withRecursion needinstall mrecursion =
   withRecursion' True needinstall mrecursion . const
 
-withRecursion' :: Bool -> Bool -> Maybe Recursion -> (FilePath -> IO ()) -> IO ()
+withRecursion' :: Bool -> Bool -> Maybe Recursion -> (FilePath -> IO ())
+               -> IO ()
 withRecursion' changedir needinstall mrecursion act = do
   case mrecursion of
     Just recursion -> do
