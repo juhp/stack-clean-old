@@ -139,13 +139,12 @@ cleanOldStackWork :: Deletion -> Natural -> Maybe String -> IO ()
 cleanOldStackWork deletion keep msystem = do
   traversePlatforms (return stackWorkInstall) msystem $ do
     dirs <- sortOn takeFileName . lines <$> shell ( unwords $ "ls" : ["-d", "*/*"])
-    let ghcs = sortOn (readVersion . takeFileName . head) $
-               groupOn takeFileName dirs
+    let ghcs = sortOn (readVersion . fst) $
+               groupOnKey takeFileName dirs
     mapM_ removeOlder ghcs
   where
-    removeOlder :: [FilePath] -> IO ()
-    removeOlder dirs = do
-      let ghcver = (takeFileName . head) dirs
+    removeOlder :: (String,[FilePath]) -> IO ()
+    removeOlder (ghcver,dirs) = do
       oldfiles <- drop (fromEnum keep) . reverse <$> sortedByAge
       mapM_ (Remove.doRemoveDirectory deletion . takeDirectory) oldfiles
       unless (null oldfiles) $
