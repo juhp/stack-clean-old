@@ -11,8 +11,9 @@ import Types
 
 doRemoveDirectory :: Deletion -> FilePath -> IO ()
 doRemoveDirectory deletion dir =
-  when (isDelete deletion) $
-  D.removeDirectoryRecursive dir
+  if isDelete deletion
+  then D.removeDirectoryRecursive dir
+  else putStrLn $ dir ++ " would be removed"
 
 removeFile :: Deletion -> FilePath -> IO ()
 removeFile deletion file =
