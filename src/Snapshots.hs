@@ -13,6 +13,7 @@ module Snapshots (
 where
 
 import Control.Monad.Extra
+import Data.Bifunctor (second)
 import Data.List.Extra
 import Data.Version.Extra
 import Numeric.Natural
@@ -52,14 +53,10 @@ instance Show VersionSnapshots where
 
 readVersionedSnaps :: [FilePath] -> [VersionSnapshots]
 readVersionedSnaps snaps =
-  let ghcs = (groupOn snapGHC . sort) (map readSnapshot snaps)
-  in map installVerSnaps ghcs
+  map (uncurry VersionSnaps . second (map snapHash)) .
+  groupOnKey snapGHC . sort $
+  map readSnapshot snaps
   where
-    installVerSnaps :: [SnapshotInstall] -> VersionSnapshots
-    installVerSnaps versnaps =
-      let ver = snapGHC (head versnaps) in
-        VersionSnaps ver (map snapHash versnaps)
-
     readSnapshot :: FilePath -> SnapshotInstall
     readSnapshot pth =
       let (hash,ver) = splitFileName pth
@@ -186,3 +183,12 @@ removeStackWork deletion = do
     else return True
   when yes $
     Remove.doRemoveDirectory deletion ".stack-work"
+
+#if !MIN_VERSION_extra(1,7,11)
+groupOnKey :: Eq k => (a -> k) -> [a] -> [(k, [a])]
+groupOnKey _ []     = []
+groupOnKey f (x:xs) = (fx, x:yes) : groupOnKey f no
+    where
+        fx = f x
+        (yes, no) = span (\y -> fx == f y) xs
+#endif
