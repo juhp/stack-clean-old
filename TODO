@@ -1,5 +1,6 @@
 - remove snapshots for uninstalled ghc versions
 - follow snapshots by installed ghc versions
+- add --stack-root
 
 - track snapshot dependencies through package .conf files
 * clean up dist/ too

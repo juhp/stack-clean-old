@@ -1,5 +1,5 @@
 name:                stack-clean-old
-version:             0.5.1
+version:             0.5.2
 synopsis:            Clean away old stack build artifacts
 description:
         A tool for removing old .stack-work/install builds and
@@ -9,7 +9,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Jens Petersen <juhpetersen@gmail.com>
 maintainer:          Jens Petersen <juhpetersen@gmail.com>
-copyright:           2020-2023  Jens Petersen <juhpetersen@gmail.com>
+copyright:           2020-2023,2025  Jens Petersen <juhpetersen@gmail.com>
 homepage:            https://github.com/juhp/stack-clean-old
 bug-reports:         https://github.com/juhp/stack-clean-old/issues
 build-type:          Simple

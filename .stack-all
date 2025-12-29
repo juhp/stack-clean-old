@@ -1,3 +1,4 @@
 [versions]
-# lts-9 optparse-applicative too old
-oldest = lts-10
+# was: lts-9 optparse-applicative too old
+# lts-11 failing on unix-compat (on f44/rawhide)
+oldest = lts-12

@@ -57,36 +57,36 @@ otherwise they are each listed by default.
 List a project's builds:
 ```ShellSession
 $ stack-clean-old list
-149M  9.2.8  (5 dirs)
-163M  9.4.7  (5 dirs)
-155M  9.6.2  (5 dirs)
+149M  9.6.7  (5 dirs)
+163M  9.8.4  (5 dirs)
+155M  9.10.3  (5 dirs)
 ```
-Remove project's 9.0.2 builds:
+Remove project's 9.4.8 builds:
 ```ShellSession
-$ stack-clean-old remove --delete --project 9.0.2
+$ stack-clean-old remove --delete --project 9.4.8
 :
 ```
 (--project is optional in a project dir).
 
-Remove stack ghc-9.4 snapshot builds and minor compilers before 9.4.7:
+Remove stack ghc-9.6 snapshot builds and minor compilers before 9.6.7:
 ```ShellSession
-$ stack-clean-old list --global 9.4
+$ stack-clean-old list --global 9.6
 x86_64-linux-tinfo6:
-1.8G  9.4.6  (61 dirs)
-279M  9.4.7  (6 dirs)
+1.8G  9.6.6  (61 dirs)
+279M  9.6.7  (6 dirs)
 x86_64-linux:
-ghc-tinfo6-9.4.6
-ghc-tinfo6-9.4.7
-$ stack-clean-old keep-minor --global 9.4
-ghc-tinfo6-9.4.6 compiler would be removed
+ghc-tinfo6-9.6.6
+ghc-tinfo6-9.6.7
+$ stack-clean-old keep-minor --global 9.6
+ghc-tinfo6-9.6.6 compiler would be removed
 x86_64-linux-tinfo6:
-61 dirs in ~/.stack/snapshots/x86_64-linux-tinfo6/*/9.4.6 would be removed
+61 dirs in ~/.stack/snapshots/x86_64-linux-tinfo6/*/9.6.6 would be removed
 
 (use --delete (-d) for removal)
-$ stack-clean-old keep-minor --global 9.4 -d
-ghc-tinfo6-9.4.6 compiler removed
+$ stack-clean-old keep-minor --global 9.6 --delete
+ghc-tinfo6-9.6.6 compiler removed
 x86_64-linux-tinfo6:
-61 dirs in ~/.stack/snapshots/x86_64-linux-tinfo6/*/9.4.6 removed
+61 dirs in ~/.stack/snapshots/x86_64-linux-tinfo6/*/9.6.6 removed
 ```
 (--global is optional outside a project dir).
 
@@ -114,12 +114,14 @@ space (seems same as `stack clean --full` inside a project).
 (Note you can also run this tool via `stack clean-old`.)
 
 `$ stack-clean-old --version`
+
 ```
-0.5
+0.5.2
 ```
 To get help you can run `stack-clean-old` or:
 
 `$ stack-clean-old --help`
+
 ```
 Stack clean up tool
 
@@ -147,6 +149,7 @@ Available commands:
 Most of the commands have similar options, e.g.:
 
 `$ stack-clean-old remove --help`
+
 ```
 Usage: stack-clean-old remove [(-d|--delete) [-y|--yes]]
                               [(-P|--project) | (-S|--snapshots) |

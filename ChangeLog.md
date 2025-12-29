@@ -1,5 +1,9 @@
 # Release history for stack-clean-old
 
+## 0.5.2 (2025-12-28)
+- 'delete-work' now provides output
+- some safe refactorings
+
 ## 0.5.1 (2023-12-17)
 - listStackSubdirs: sort after filtering
 - Directory: ignore non-directories, like .DS_Store files (#19,
