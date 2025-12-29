@@ -12,6 +12,7 @@ where
 
 import Control.Monad (filterM, forM_, unless, when)
 import Data.List.Extra
+import Safe (headMay)
 import SimpleCmd ((+-+),
 #if MIN_VERSION_simple_cmd(0,2,0)
                   warning
@@ -83,7 +84,7 @@ listPlatforms msystem = do
 
 listCurrentDirectory :: IO [FilePath]
 listCurrentDirectory =
-  listDirectory "." >>= filterM doesDirectoryExist . filter (\d -> head d /= '.')
+  listDirectory "." >>= filterM doesDirectoryExist . filter (\d -> headMay d /= Just '.')
 
 #if !MIN_VERSION_simple_cmd(0,2,0)
 warning :: String -> IO ()

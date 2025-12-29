@@ -38,6 +38,7 @@ executable stack-clean-old
                      , extra >= 1.4.3
                      , filepath
                      , filemanip
+                     , safe
                      , simple-cmd >= 0.1.4
                      , simple-cmd-args >= 0.1.2
                      , simple-prompt >= 0.2
