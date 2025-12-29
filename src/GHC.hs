@@ -97,4 +97,4 @@ doRemoveGhcVersion :: Deletion -> FilePath -> IO ()
 doRemoveGhcVersion deletion ghcinst = do
   Remove.doRemoveDirectory deletion ghcinst
   Remove.removeFile deletion (ghcinst <.> "installed")
-  putStrLn $ ghcinst +-+ "compiler" +-+ (if isDelete deletion then "" else "would be") +-+ "removed"
+  putStrLn $ ghcinst +-+ "compiler" +-+ Remove.wouldBeRemoved deletion

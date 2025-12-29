@@ -92,7 +92,7 @@ removeVersionSnaps deletion cwd versnap = do
   let dirs = snapsHashes versnap
   dir <- getCurrentDirectory
   home <- getHomeDirectory
-  putStrLn $ plural "dir" (length dirs) +-+ "in" +-+ renderDir home dir </> "*" </> showVersion (snapsVersion versnap) +-+ (if isDelete deletion then "" else "would be") +-+ "removed"
+  putStrLn $ plural "dir" (length dirs) +-+ "in" +-+ renderDir home dir </> "*" </> showVersion (snapsVersion versnap) +-+ Remove.wouldBeRemoved deletion
   mapM_ (Remove.doRemoveDirectory deletion) dirs
   where
     renderDir :: FilePath -> FilePath -> FilePath
@@ -148,7 +148,7 @@ cleanOldStackWork deletion keep msystem = do
       oldfiles <- drop (fromEnum keep) . reverse <$> sortedByAge
       mapM_ (Remove.doRemoveDirectory deletion . takeDirectory) oldfiles
       unless (null oldfiles) $
-        putStrLn $ plural "dir" (length oldfiles) +-+ (if isDelete deletion then "" else "would be") +-+ "removed for" +-+ ghcver
+        putStrLn $ plural "dir" (length oldfiles) +-+ Remove.wouldBeRemoved deletion +-+ "for" +-+ ghcver
       where
         sortedByAge = do
           fileTimes <- mapM newestTimeStamp dirs

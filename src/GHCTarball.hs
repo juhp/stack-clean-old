@@ -91,4 +91,4 @@ removeGhcMinorTarball deletion mghcver msystem = do
 doRemoveGhcTarballVersion :: Deletion -> FilePath -> IO ()
 doRemoveGhcTarballVersion deletion ghctarball = do
   Remove.removeFile deletion ghctarball
-  putStrLn $ ghctarball +-+ "tarball" +-+ (if isDelete deletion then "" else "would be") +-+ "removed"
+  putStrLn $ ghctarball +-+ "tarball" +-+ Remove.wouldBeRemoved deletion
